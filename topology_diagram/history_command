@@ -1,0 +1,95 @@
+  165  /bin/python3 "/home/kelvin/Downloads/Software testing & development/Testing & Development/Drone 0n Ai /dynamic_planner.py"
+  166  pip install numpy
+  167  /home/kelvin/Downloads/Software testing & development/.venv/bin/python -m pip install numpy
+  168  "/home/kelvin/Downloads/Software testing & development/.venv/bin/python" "/home/kelvin/Downloads/Software testing & development/Testing & Development/Drone 0n Ai /dynamic_planner.py"
+  169  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+  170  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+  171  sudo apt install python3-pip -y
+  172  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+  173  pip install numpy pandas scikit-learn matplotlib requests
+  174  sudo apt update && sudo apt install python3-venv python3-full -y
+  175  python3 -m venv .venv
+  176  source .venv/bin/activate
+  177  pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+  178  pip install numpy pandas scikit-learn matplotlib requests
+  179  pip install -r uav_drone_route_optimization/requirements.txt
+  180  deactivate
+  181  pip install -r uav_drone_route_optimization/requirements.txt
+  182  python3 -m venv .venv
+  183  python3 -m venv .venv
+  184  source .venv/bin/activate
+  185  pip install --upgrade pip
+  186  pip install torch numpy scipy z3-solver pytest pyyaml
+  187  python3 uav_drone_route_optimization/run_all_subsystems.py
+  188  pwd
+  189  ls
+  190  cd Testing\ \&\ Development/
+  191  ls
+  192  cd Drone\ 0n\ Ai\ /
+  193  ls
+  194  pwd
+  195  python3 run_all_subsystems.py
+  196  python3 main.py
+  197  python3 main.py dispatch
+  198  python3 main.py train
+  199  mkdir -p checkpoints/onnx
+  200  python3 main.py train
+  201  mkdir -p models
+  202  touch models/__init__.py
+  203  python3 main.py train
+  204  python3 main.py dispatch
+  205  python3 main.py export-onnx
+  206  pip install onnx onnxruntime
+  207  python3 main.py export-onnx
+  208  python3 main.py verify
+  209  pip install opencv-python-headless duckdb shapely matplotlib
+  210  python3 main.py verify
+  211  python3 main.py simulate
+  212  python3 main.py benchmark
+  213  pytest tests/ -v
+  214  python3 -m pytest tests/ -v
+  215  python3 demo_live_execution.py
+  216  python3 generate_evaluation_figures.py
+  217  xdg-open figures/fig1_energy_surrogate_fit.png
+  218  xdg-open figures/fig2_ablation_comparison.png
+  219  xdg-open figures/fig3_rl_convergence.png
+  220  python3 visualize_geofence.py
+  221  pip install folium
+  222  python3 visualize_geofence.py
+  223  xdg-open singapore_geofence_map.html
+  224  python3 generate_latex_report.py
+  225  python3 chaos_testing.py
+  226  xdg-open figures/fig1_energy_surrogate_fit.png
+  227  init 0
+  228  docker compose up --build -d
+  229  unset DOCKER_HOST
+  230  export DOCKER_HOST="unix:///var/run/docker.sock"
+  231  docker compose up --build -d
+  232  mv doker Dockerfile
+  233  docker compose up --build -d
+  234  mv requirement.txt requirements.txt
+  235  docker compose up --build -d
+  236  docker ps
+  237  curl -s http://127.0.0.1:8000/health
+  238  curl -s "http://127.0.0.1:8000/api/v1/mission/weather-status?lat=1.3500&lon=103.8200"
+  239  curl -s http://127.0.0.1:8001/health
+  240  python3 -m pytest tests/test_end_to_end_pipeline.py -v
+  241  python3 active_cell_balancing_switched_cap.py
+  242  python3 battery_thermal_runaway_safeguard.py
+  243  python3 full_stack_verification_audit.py
+  244  python3 simulate_fleet_mission.py
+  245  python3 simulate_fleet_mission.py --ws-url ws://127.0.0.1:8765 --steps 30
+  246  python3 run_all_subsystems.py
+  247  python3 demo_live_execution.py
+  248  streamlit run dashboard.py --server.port 8501 --server.address 0.0.0.0
+  249  pip install streamlit
+  250  python3 -m streamlit run dashboard.py --server.port 8501 --server.address 0.0.0.0
+  251  pip install plotly pandas
+  252* 
+  253  python3 -m streamlit run dashboard.py --server.port 8501 --server.address 0.0.0.0
+  254  docker ps
+  255  python3 -m streamlit run dashboard.py --server.port 8501 --server.address 0.0.0.0
+  256  docker compose down 
+  257  python3 -m streamlit run dashboard.py --server.port 8501 --server.address 0.0.0.0
+  258  docker compose up --build -d
+  259  history

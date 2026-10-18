@@ -1,0 +1,730 @@
+{
+  "id": null,
+  "uid": "uav-gnn-routing-live",
+  "title": "04 · GNN Meteorological Routing · DEMO",
+  "description": "Synthetic waypoints and distances to three example circular exclusion zones; not certified airspace or GNN output. All incoming samples currently come from an explicitly synthetic producer. No physical drone or trained model is connected.",
+  "schemaVersion": 39,
+  "version": 1,
+  "style": "dark",
+  "editable": true,
+  "refresh": "10s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "tags": [
+    "uav-suite",
+    "simulation"
+  ],
+  "links": [
+    {
+      "title": "01 · Pre-MLP Meteorological Battery Drain",
+      "url": "/d/uav-pre-mlp-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "02 · Post-MLP Energy Drain Optimization",
+      "url": "/d/uav-post-mlp-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "03 · UAV Fleet Neural Energy Surrogate",
+      "url": "/d/uav-energy-surrogate-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "04 · GNN Meteorological Routing",
+      "url": "/d/uav-gnn-routing-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "05 · Policy Training Convergence",
+      "url": "/d/uav-training-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "06 · MLP Energy Surrogate Accuracy",
+      "url": "/d/uav-accuracy-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "07 · Routing Framework Comparison",
+      "url": "/d/uav-comparison-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "04 · GNN Meteorological Routing",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**SIMULATED LIVE DATA** · Synthetic waypoints and distances to three example circular exclusion zones; not certified airspace or GNN output.\n\nRefresh: 10 seconds. Statistics use fresh samples only. These are illustrative scenarios, not flight validation or measured ML gains."
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Waypoints",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT count(\"lat\") FROM (SELECT last(\"lat\") AS \"lat\" FROM \"uav_suite_routing\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"node_id\")",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00D9F5"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Buffer incursions",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT sum(\"breach\") FROM (SELECT last(\"breach\") AS \"breach\" FROM \"uav_suite_routing\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"node_id\")",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F2495C"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Mean edge cost",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT mean(\"edge_cost\") FROM (SELECT last(\"edge_cost\") AS \"edge_cost\" FROM \"uav_suite_routing\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"node_id\")",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FFB020"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Minimum perimeter clearance",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT min(\"clearance_m\") FROM (SELECT last(\"clearance_m\") AS \"clearance_m\" FROM \"uav_suite_routing\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"node_id\")",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthm",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#AD5CFF"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "type": "xychart",
+      "title": "Singapore waypoint coordinates",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"lon\") AS \"lon\", last(\"lat\") AS \"lat\" FROM \"uav_suite_routing\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"node_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00C896"
+          },
+          "decimals": 2,
+          "custom": {
+            "show": "points",
+            "pointSize": {
+              "fixed": 6
+            },
+            "fillOpacity": 85,
+            "lineWidth": 2,
+            "axisLabel": "Latitude (°N)"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "lon"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Longitude (°E)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "name": {
+              "fixed": "Latitude (°N)"
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "lon"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "lat"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "type": "xychart",
+      "title": "Edge cost vs NFZ perimeter clearance",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 7,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"clearance_m\") AS \"clearance_m\", last(\"edge_cost\") AS \"edge_cost\" FROM \"uav_suite_routing\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"node_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00D9F5"
+          },
+          "decimals": 2,
+          "custom": {
+            "show": "points",
+            "pointSize": {
+              "fixed": 6
+            },
+            "fillOpacity": 85,
+            "lineWidth": 2,
+            "axisLabel": "Route cost (arbitrary units)"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "clearance_m"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "lengthm"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Distance to example NFZ perimeter (m)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "name": {
+              "fixed": "Route cost (arbitrary units)"
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "clearance_m"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "edge_cost"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "type": "xychart",
+      "title": "Wind vectors: east / north components",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"wind_u_ms\") AS \"wind_u_ms\", last(\"wind_v_ms\") AS \"wind_v_ms\" FROM \"uav_suite_routing\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"node_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "velocityms",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00C896"
+          },
+          "decimals": 2,
+          "custom": {
+            "show": "points",
+            "pointSize": {
+              "fixed": 6
+            },
+            "fillOpacity": 85,
+            "lineWidth": 2,
+            "axisLabel": "Northward wind (m/s)"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "wind_u_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "velocityms"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Eastward wind (m/s)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "name": {
+              "fixed": "Northward wind (m/s)"
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "wind_u_ms"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "wind_v_ms"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "type": "barchart",
+      "title": "Mean edge cost by route",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 17,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT mean(\"edge_cost\") AS \"edge_cost\" FROM (SELECT last(\"edge_cost\") AS \"edge_cost\" FROM \"uav_suite_routing\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"node_id\",\"route_id\") GROUP BY \"route_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00D9F5"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "orientation": "vertical",
+        "xField": "route_id",
+        "showValue": "auto",
+        "groupWidth": 0.75,
+        "barWidth": 0.8,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "route_id",
+                "edge_cost"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "histogram",
+      "title": "Distance-to-NFZ distribution",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 17,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"clearance_m\") AS \"clearance_m\" FROM \"uav_suite_routing\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"node_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "lengthm",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00C896"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "combine": true,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "clearance_m"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "__inputs": [
+    {
+      "name": "DS_UAV_DATABASE",
+      "label": "UAV_Database",
+      "description": "Select the separate InfluxDB datasource whose database is UAV_Database. Do not select the cold-chain datasource.",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ]
+}

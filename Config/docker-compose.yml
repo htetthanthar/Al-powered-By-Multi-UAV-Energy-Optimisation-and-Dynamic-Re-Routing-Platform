@@ -1,0 +1,97 @@
+# docker-compose.yml
+services:
+  gateway-service:
+    build:
+      context: ..
+      dockerfile: Config/Dockerfile
+    container_name: uav_gateway_service
+    command: python3 "All sensor/server.py"
+    ports:
+      - "${UAV_BIND_ADDRESS:-127.0.0.1}:8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ENV=production
+      - WEATHER_SERVICE_URL=http://weather-service:8002
+      - MATRIX_SERVICE_URL=http://matrix-service:8001
+    depends_on:
+      - weather-service
+      - matrix-service
+    restart: always
+    volumes:
+      - ../checkpoints:/app/checkpoints
+      - ../data:/app/data
+
+  matrix-service:
+    build:
+      context: ..
+      dockerfile: Config/Dockerfile
+    container_name: uav_matrix_service
+    command: python3 "All sensor/matrix_service.py"
+    ports:
+      - "${UAV_BIND_ADDRESS:-127.0.0.1}:8001:8001"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: always
+
+  weather-service:
+    build:
+      context: ..
+      dockerfile: Config/Dockerfile
+    container_name: uav_weather_service
+    command: python3 "All sensor/weather_service.py"
+    ports:
+      - "${UAV_BIND_ADDRESS:-127.0.0.1}:8002:8002"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: always
+    volumes:
+      - ../checkpoints:/app/checkpoints
+      - ../data:/app/data
+
+  telemetry-broadcaster:
+    build:
+      context: ..
+      dockerfile: Config/Dockerfile
+    container_name: uav_telemetry_ws
+    command: python3 "All sensor/ws_telemetry_server.py"
+    ports:
+      - "${UAV_BIND_ADDRESS:-127.0.0.1}:8765:8765"
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: always
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: uav_prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    ports:
+      - "${UAV_BIND_ADDRESS:-127.0.0.1}:9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - telemetry-broadcaster
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: uav_grafana
+    profiles: ["local-grafana"]
+    ports:
+      - "${GRAFANA_BIND_ADDRESS:-127.0.0.1}:3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-change-me-before-production}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  prometheus-data:
+  grafana-data:

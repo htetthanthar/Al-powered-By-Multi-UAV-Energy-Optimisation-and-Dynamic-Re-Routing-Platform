@@ -1,0 +1,42 @@
+========================================================================================================================
+                                     PRODUCTION CLUSTER DEPLOYMENT TOPOLOGY
+========================================================================================================================
+
+                         [ HTTPS / WSS Ingress (Reverse Proxy / NGINX) ]
+                                                │
+                 ┌──────────────────────────────┴──────────────────────────────┐
+                 ▼                                                             ▼
+    [ Streamlit Operator Console ]                               [ 3D WebGL Digital Twin Client ]
+       (Port 8501 / WebUI)                                          (Three.js Engine / HUD)
+                 │                                                             ▲
+                 │ (REST Control Calls)                                        │ (Low-Latency Telemetry)
+                 ▼                                                             │
+    ┌──────────────────────────────────────────┐                               │
+    │      FASTAPI DISPATCH & PLANNING API     │                               │
+    │               (Port 8000)                │                               │
+    │  • Geofencing & Airspace Triage          │                               │
+    │  • Graph Attention Policy Optimization   │                               │
+    │  • Dynamic Sub-Cluster Bin Packing       │                               │
+    └────────────────────┬─────────────────────┘                               │
+                         │                                                     │
+        ┌────────────────┼────────────────────────────────┐                    │
+        ▼                ▼                                ▼                    │
+ ┌─────────────┐  ┌─────────────┐                  ┌─────────────┐             │
+ │ Google Maps │  │ Open-Meteo  │                  │  Embedded   │             │
+ │ Matrix API  │  │ Weather API │                  │ DuckDB Lake │             │
+ └─────────────┘  └─────────────┘                  └─────────────┘             │
+                                                          ▲                    │
+                                                          │ (Batch SQL Sync)   │
+                                                          │                    │
+                                            ┌─────────────────────────────┐    │
+                                            │ WEBSOCKET BROADCAST ENGINE  │────┘
+                                            │         (Port 8001)         │
+                                            └─────────────┬───────────────┘
+                                                          ▲
+                                                          │ (MAVLink UDP Telemetry)
+                                                          │
+                                            ┌─────────────────────────────┐
+                                            │ PX4 / ARDUPILOT FLIGHT CORE │
+                                            │ (Companion Jetson / SITL)   │
+                                            └─────────────────────────────┘
+=======================================================================================

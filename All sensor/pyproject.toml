@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uav-dynamic-routing"
+version = "1.0.0"
+description = "Autonomous UAV Dynamic Route Optimization & Scheduling Engine under Micro-Climate Constraints"
+readme = "README.md"
+authors = [{ name = "Autonomous Systems Team", email = "ops@uav-logistics.internal" }]
+license = { text = "MIT" }
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "torch>=2.0.0",
+    "numpy>=1.24.0",
+    "pandas>=2.0.0",
+    "scikit-learn>=1.3.0",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "streamlit>=1.25.0",
+    "plotly>=5.15.0",
+    "pytest>=7.4.0",
+    "requests>=2.31.0",
+    "httpx>=0.24.0",
+    "shapely>=2.0.0",
+    "duckdb>=0.8.0",
+    "folium>=0.14.0",
+    "pymavlink>=2.4.30",
+    "onnx>=1.14.0",
+    "onnxruntime>=1.15.0",
+    "optuna>=3.2.0",
+    "psutil>=5.9.0",
+    "websockets>=11.0.0",
+    "scipy>=1.10.0",
+    "matplotlib>=3.7.0",
+    "opencv-python-headless>=4.8.0",
+    "z3-solver>=4.12.0",
+    "prometheus-client>=0.20.0"
+]
+
+[project.scripts]
+uav-cli = "main:main"
+uav-server = "server:app"
+uav-dashboard = "dashboard:main"
+
+[tool.setuptools]
+packages = ["models"]
+py_modules = [
+    "dynamic_planner",
+    "generate_datasets",
+    "train_energy",
+    "train_weather",
+    "train_rl_router",
+    "fleet_scheduler",
+    "spatial_geometry",
+    "telemetry_logger",
+    "weather_collector",
+    "battery_physics",
+    "blackbox_analyzer",
+    "run_sitl_regression"
+]

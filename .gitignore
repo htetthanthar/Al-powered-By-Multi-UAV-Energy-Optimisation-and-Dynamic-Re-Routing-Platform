@@ -1,0 +1,15 @@
+# Python & Virtual Environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Node.js
+node_modules/
+uav-command/node_modules/
+
+# Archives & OS files
+*.zip
+.DS_Store
+Thumbs.db

@@ -1,0 +1,6 @@
+# The base Compose file binds all operational ports to loopback by default.
+# This VPS file is retained as a stable Jenkins deployment target.
+services:
+  telemetry-broadcaster:
+    environment:
+      DEPLOYMENT_ENV: production

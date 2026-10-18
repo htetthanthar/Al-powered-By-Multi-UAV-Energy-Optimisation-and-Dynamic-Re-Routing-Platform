@@ -1,0 +1,225 @@
+{
+  "id": null,
+  "uid": "uav-comparison-live",
+  "title": "07 · Routing Framework Comparison · DEMO",
+  "description": "100 synthetic durations per framework. Means and violation rates are computed independently; this is not a measured ablation benchmark. All incoming samples currently come from an explicitly synthetic producer. No physical drone or trained model is connected.",
+  "schemaVersion": 39,
+  "version": 1,
+  "style": "dark",
+  "editable": true,
+  "refresh": "10s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "tags": [
+    "uav-suite",
+    "simulation"
+  ],
+  "links": [
+    {
+      "title": "01 · Pre-MLP Meteorological Battery Drain",
+      "url": "/d/uav-pre-mlp-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "02 · Post-MLP Energy Drain Optimization",
+      "url": "/d/uav-post-mlp-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "03 · UAV Fleet Neural Energy Surrogate",
+      "url": "/d/uav-energy-surrogate-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "04 · GNN Meteorological Routing",
+      "url": "/d/uav-gnn-routing-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "05 · Policy Training Convergence",
+      "url": "/d/uav-training-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "06 · MLP Energy Surrogate Accuracy",
+      "url": "/d/uav-accuracy-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "07 · Routing Framework Comparison",
+      "url": "/d/uav-comparison-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "07 · Routing Framework Comparison",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**SIMULATED LIVE DATA** · 100 synthetic durations per framework. Means and violation rates are computed independently; this is not a measured ablation benchmark.\n\nRefresh: 10 seconds. Statistics use fresh samples only. These are illustrative scenarios, not flight validation or measured ML gains."
+      }
+    },
+    {
+      "id": 2,
+      "type": "barchart",
+      "title": "Flight duration and 55-minute violation rate",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 24,
+        "h": 17
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"mean_eta_min\") AS \"mean_eta_min\", last(\"violations_pct\") AS \"violations_pct\", last(\"limit_min\") AS \"limit_min\" FROM \"uav_suite_comparison\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"framework\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "m",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00D9F5"
+          },
+          "decimals": 2,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent",
+                "value": null
+              },
+              {
+                "color": "#F2495C",
+                "value": 55
+              }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": {
+              "mode": "dashed"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mean_eta_min"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Mean route ETA (min)"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "violations_pct"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "55-min violations (%)"
+              },
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#F2495C"
+                }
+              },
+              {
+                "id": "custom.axisPlacement",
+                "value": "right"
+              },
+              {
+                "id": "min",
+                "value": 0
+              },
+              {
+                "id": "max",
+                "value": 100
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "orientation": "vertical",
+        "xField": "framework",
+        "showValue": "auto",
+        "groupWidth": 0.75,
+        "barWidth": 0.8,
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "framework",
+                "mean_eta_min",
+                "violations_pct"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "__inputs": [
+    {
+      "name": "DS_UAV_DATABASE",
+      "label": "UAV_Database",
+      "description": "Select the separate InfluxDB datasource whose database is UAV_Database. Do not select the cold-chain datasource.",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ]
+}

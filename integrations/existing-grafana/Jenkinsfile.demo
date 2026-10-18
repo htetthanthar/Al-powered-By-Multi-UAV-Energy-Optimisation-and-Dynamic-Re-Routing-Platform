@@ -1,0 +1,20 @@
+// Create a separate Pipeline job on an agent running on the same VPS as InfluxDB.
+// Paste this pipeline into that new job; it does not need a Git repository.
+// The emitter must first be copied to the path below.
+pipeline {
+  agent any
+  options {
+    disableConcurrentBuilds()
+    timeout(time: 2, unit: 'MINUTES')
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+    skipDefaultCheckout(true)
+  }
+  triggers { cron('* * * * *') }
+  stages {
+    stage('Emit simulated UAV telemetry') {
+      steps {
+        sh 'python3 -B /opt/uav-grafana-demo/emit_demo.py --database UAV_Database --write --samples 6'
+      }
+    }
+  }
+}

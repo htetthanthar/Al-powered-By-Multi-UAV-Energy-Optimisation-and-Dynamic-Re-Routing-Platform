@@ -1,0 +1,155 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: uav-mission-control
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: uav-system-config
+  namespace: uav-mission-control
+data:
+  MAX_PAYLOAD_KG: "2.0"
+  MAX_FLIGHT_TIME_MIN: "55.0"
+  CRUISE_SPEED_KMH: "65.0"
+  WIND_SAFETY_THRESHOLD_KMH: "30.0"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: duckdb-lake-pvc
+  namespace: uav-mission-control
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uav-dispatch-backend
+  namespace: uav-mission-control
+  labels:
+    app: uav-dispatch-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: uav-dispatch-backend
+  template:
+    metadata:
+      labels:
+        app: uav-dispatch-backend
+    spec:
+      containers:
+        - name: fastapi-engine
+          image: uav-route-optimization:latest
+          imagePullPolicy: IfNotPresent
+          command: ["python3", "All sensor/server.py"]
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: uav-system-config
+          env:
+            - name: PYTHONPATH
+              value: "/app/All sensor:/app"
+          volumeMounts:
+            - name: data-volume
+              mountPath: /app/data
+          resources:
+            requests:
+              memory: "2Gi"
+              cpu: "1000m"
+            limits:
+              memory: "4Gi"
+              cpu: "2000m"
+      volumes:
+        - name: data-volume
+          persistentVolumeClaim:
+            claimName: duckdb-lake-pvc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: uav-mission-dashboard
+  namespace: uav-mission-control
+  labels:
+    app: uav-mission-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: uav-mission-dashboard
+  template:
+    metadata:
+      labels:
+        app: uav-mission-dashboard
+    spec:
+      containers:
+        - name: streamlit-ui
+          image: uav-route-optimization:latest
+          imagePullPolicy: IfNotPresent
+          command: ["streamlit", "run", "All sensor/dashboard.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+          ports:
+            - containerPort: 8501
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dispatch-api-service
+  namespace: uav-mission-control
+spec:
+  type: ClusterIP
+  selector:
+    app: uav-dispatch-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dashboard-ui-service
+  namespace: uav-mission-control
+spec:
+  type: ClusterIP
+  selector:
+    app: uav-mission-dashboard
+  ports:
+    - port: 8501
+      targetPort: 8501
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: uav-system-ingress
+  namespace: uav-mission-control
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/websocket-services: "dispatch-api-service"
+spec:
+  rules:
+    - host: mission-control.uav-logistics.internal
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: dispatch-api-service
+                port:
+                  number: 8000
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dashboard-ui-service
+                port:
+                  number: 8501

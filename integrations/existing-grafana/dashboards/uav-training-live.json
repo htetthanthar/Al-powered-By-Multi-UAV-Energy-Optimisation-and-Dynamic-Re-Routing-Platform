@@ -1,0 +1,295 @@
+{
+  "id": null,
+  "uid": "uav-training-live",
+  "title": "05 · Policy Training Convergence · DEMO",
+  "description": "Illustrative epoch curves regenerated as a snapshot. These are not training logs. All incoming samples currently come from an explicitly synthetic producer. No physical drone or trained model is connected.",
+  "schemaVersion": 39,
+  "version": 1,
+  "style": "dark",
+  "editable": true,
+  "refresh": "10s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "tags": [
+    "uav-suite",
+    "simulation"
+  ],
+  "links": [
+    {
+      "title": "01 · Pre-MLP Meteorological Battery Drain",
+      "url": "/d/uav-pre-mlp-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "02 · Post-MLP Energy Drain Optimization",
+      "url": "/d/uav-post-mlp-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "03 · UAV Fleet Neural Energy Surrogate",
+      "url": "/d/uav-energy-surrogate-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "04 · GNN Meteorological Routing",
+      "url": "/d/uav-gnn-routing-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "05 · Policy Training Convergence",
+      "url": "/d/uav-training-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "06 · MLP Energy Surrogate Accuracy",
+      "url": "/d/uav-accuracy-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "07 · Routing Framework Comparison",
+      "url": "/d/uav-comparison-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "05 · Policy Training Convergence",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**SIMULATED LIVE DATA** · Illustrative epoch curves regenerated as a snapshot. These are not training logs.\n\nRefresh: 10 seconds. Statistics use fresh samples only. These are illustrative scenarios, not flight validation or measured ML gains."
+      }
+    },
+    {
+      "id": 2,
+      "type": "xychart",
+      "title": "Policy gradient loss by training epoch",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 12,
+        "h": 16
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"epoch\") AS \"epoch\", last(\"loss\") AS \"loss\" FROM \"uav_suite_training\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"epoch_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00C896"
+          },
+          "decimals": 2,
+          "custom": {
+            "show": "lines",
+            "pointSize": {
+              "fixed": 6
+            },
+            "fillOpacity": 85,
+            "lineWidth": 2,
+            "axisLabel": "Policy loss (synthetic)"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "epoch"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Training epoch"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "name": {
+              "fixed": "Policy loss (synthetic)"
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "epoch"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "loss"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 3,
+      "type": "xychart",
+      "title": "Mean route cost convergence",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 12,
+        "h": 16
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"epoch\") AS \"epoch\", last(\"tour_cost\") AS \"tour_cost\" FROM \"uav_suite_training\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' GROUP BY \"epoch_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FFB020"
+          },
+          "decimals": 2,
+          "custom": {
+            "show": "lines",
+            "pointSize": {
+              "fixed": 6
+            },
+            "fillOpacity": 85,
+            "lineWidth": 2,
+            "axisLabel": "Route cost (arbitrary units)"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "epoch"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Training epoch"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "name": {
+              "fixed": "Route cost (arbitrary units)"
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "epoch"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "tour_cost"
+              }
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "__inputs": [
+    {
+      "name": "DS_UAV_DATABASE",
+      "label": "UAV_Database",
+      "description": "Select the separate InfluxDB datasource whose database is UAV_Database. Do not select the cold-chain datasource.",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ]
+}

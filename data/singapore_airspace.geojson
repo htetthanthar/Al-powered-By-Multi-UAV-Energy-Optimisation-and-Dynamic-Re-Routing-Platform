@@ -1,0 +1,116 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Paya Lebar Restricted Airspace (R-101)",
+                "type": "MILITARY_AERODROME",
+                "floor_m": 0,
+                "ceiling_m": 1500,
+                "action": "DIVERT_TO_GROUND"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            103.8800,
+                            1.3400
+                        ],
+                        [
+                            103.9300,
+                            1.3400
+                        ],
+                        [
+                            103.9300,
+                            1.3900
+                        ],
+                        [
+                            103.8800,
+                            1.3900
+                        ],
+                        [
+                            103.8800,
+                            1.3400
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Tengah Restricted Aerodrome (R-102)",
+                "type": "MILITARY_AIRBASE",
+                "floor_m": 0,
+                "ceiling_m": 2000,
+                "action": "DIVERT_TO_GROUND"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            103.6800,
+                            1.3600
+                        ],
+                        [
+                            103.7300,
+                            1.3600
+                        ],
+                        [
+                            103.7300,
+                            1.4100
+                        ],
+                        [
+                            103.6800,
+                            1.4100
+                        ],
+                        [
+                            103.6800,
+                            1.3600
+                        ]
+                    ]
+                ]
+            }
+        },
+        {
+            "type": "Feature",
+            "properties": {
+                "name": "Approved Central Urban Flight Corridor",
+                "type": "COMMERCIAL_CORRIDOR",
+                "floor_m": 15,
+                "ceiling_m": 60,
+                "action": "PERMITTED_UAV"
+            },
+            "geometry": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [
+                            103.7500,
+                            1.2800
+                        ],
+                        [
+                            103.8600,
+                            1.2800
+                        ],
+                        [
+                            103.8600,
+                            1.3600
+                        ],
+                        [
+                            103.7500,
+                            1.3600
+                        ],
+                        [
+                            103.7500,
+                            1.2800
+                        ]
+                    ]
+                ]
+            }
+        }
+    ]
+}

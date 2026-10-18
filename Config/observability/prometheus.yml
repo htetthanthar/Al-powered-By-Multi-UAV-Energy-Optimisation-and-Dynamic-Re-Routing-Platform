@@ -1,0 +1,8 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: uav-telemetry
+    static_configs:
+      - targets: [telemetry-broadcaster:8765]

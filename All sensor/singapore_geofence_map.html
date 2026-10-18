@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_6aac6f2571045107ce62c0c41d07c7ac {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    
+                    <style>
+                        .foliumtooltip {
+                            
+                        }
+                       .foliumtooltip table{
+                            margin: auto;
+                        }
+                        .foliumtooltip tr{
+                            text-align: left;
+                        }
+                        .foliumtooltip th{
+                            padding: 2px; padding-right: 8px;
+                        }
+                    </style>
+            
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_6aac6f2571045107ce62c0c41d07c7ac" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_6aac6f2571045107ce62c0c41d07c7ac = L.map(
+                "map_6aac6f2571045107ce62c0c41d07c7ac",
+                {
+                    center: [1.3521, 103.8198],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 12,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_92e45fa446f6929865b355b8efcd8d48 = L.tileLayer(
+                "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 20,
+  "maxNativeZoom": 20,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors \u0026copy; \u003ca href=\"https://carto.com/attributions\"\u003eCARTO\u003c/a\u003e",
+  "subdomains": "abcd",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_92e45fa446f6929865b355b8efcd8d48.addTo(map_6aac6f2571045107ce62c0c41d07c7ac);
+        
+    
+        function geo_json_7bc9aeb106ce7746b8198832b47f6f21_styler(feature) {
+            switch(feature.properties.name) {
+                default:
+                    return {"color": "#ff3333", "fillColor": "#ff0000", "fillOpacity": 0.35, "weight": 2};
+            }
+        }
+
+        function geo_json_7bc9aeb106ce7746b8198832b47f6f21_onEachFeature(feature, layer) {
+
+            layer.on({
+            });
+        };
+        var geo_json_7bc9aeb106ce7746b8198832b47f6f21 = L.geoJson(null, {
+                onEachFeature: geo_json_7bc9aeb106ce7746b8198832b47f6f21_onEachFeature,
+            
+                style: geo_json_7bc9aeb106ce7746b8198832b47f6f21_styler,
+            ...{
+}
+        });
+
+        function geo_json_7bc9aeb106ce7746b8198832b47f6f21_add (data) {
+            geo_json_7bc9aeb106ce7746b8198832b47f6f21
+                .addData(data);
+        }
+            geo_json_7bc9aeb106ce7746b8198832b47f6f21_add({"features": [{"geometry": {"coordinates": [[[103.88, 1.34], [103.93, 1.34], [103.93, 1.39], [103.88, 1.39], [103.88, 1.34]]], "type": "Polygon"}, "properties": {"action": "DIVERT_TO_GROUND", "ceiling_m": 1500, "floor_m": 0, "name": "Paya Lebar Restricted Airspace (R-101)", "type": "MILITARY_AERODROME"}, "type": "Feature"}, {"geometry": {"coordinates": [[[103.68, 1.36], [103.73, 1.36], [103.73, 1.41], [103.68, 1.41], [103.68, 1.36]]], "type": "Polygon"}, "properties": {"action": "DIVERT_TO_GROUND", "ceiling_m": 2000, "floor_m": 0, "name": "Tengah Restricted Aerodrome (R-102)", "type": "MILITARY_AIRBASE"}, "type": "Feature"}, {"geometry": {"coordinates": [[[103.75, 1.28], [103.86, 1.28], [103.86, 1.36], [103.75, 1.36], [103.75, 1.28]]], "type": "Polygon"}, "properties": {"action": "PERMITTED_UAV", "ceiling_m": 60, "floor_m": 15, "name": "Approved Central Urban Flight Corridor", "type": "COMMERCIAL_CORRIDOR"}, "type": "Feature"}], "type": "FeatureCollection"});
+
+        
+    
+    geo_json_7bc9aeb106ce7746b8198832b47f6f21.bindTooltip(
+    function(layer){
+    let div = L.DomUtil.create('div');
+    
+    let handleObject = feature => {
+        if (feature === null) {
+            return '';
+        } else if (typeof(feature)=='object') {
+            return JSON.stringify(feature);
+        } else {
+            return feature;
+        }
+    }
+    let fields = ["name"];
+    let aliases = ["Zone:"];
+    let table = '<table>' +
+        String(
+        fields.map(
+        (v,i)=>
+        `<tr>
+            <th>${aliases[i]}</th>
+            
+            <td>${handleObject(layer.feature.properties[v])}</td>
+        </tr>`).join(''))
+    +'</table>';
+    div.innerHTML=table;
+    
+    return div
+    }
+    ,{
+  "sticky": true,
+  "className": "foliumtooltip",
+});
+                     
+    
+            geo_json_7bc9aeb106ce7746b8198832b47f6f21.addTo(map_6aac6f2571045107ce62c0c41d07c7ac);
+        
+    
+            var marker_3d0afa0ca664f2574f3eb9515e18cdb1 = L.marker(
+                [1.3, 103.8],
+                {
+}
+            ).addTo(map_6aac6f2571045107ce62c0c41d07c7ac);
+        
+    
+            var icon_21f8bc578021f9cac0d27142b0004e3e = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "green",
+  "iconColor": "white",
+  "icon": "home",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_99d87536afd2992eb34f8a8cf14323cf = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_b85d37840ed7f9484bd779fb7443661f = $(`<div id="html_b85d37840ed7f9484bd779fb7443661f" style="width: 100.0%; height: 100.0%;"><b>Central Logistics Hub (Depot)</b></div>`)[0];
+                popup_99d87536afd2992eb34f8a8cf14323cf.setContent(html_b85d37840ed7f9484bd779fb7443661f);
+            
+        
+
+        marker_3d0afa0ca664f2574f3eb9515e18cdb1.bindPopup(popup_99d87536afd2992eb34f8a8cf14323cf)
+        ;
+
+        
+    
+    
+                marker_3d0afa0ca664f2574f3eb9515e18cdb1.setIcon(icon_21f8bc578021f9cac0d27142b0004e3e);
+            
+    
+            var marker_28db7309fb6a3cbd8628d6bf0ee2a556 = L.marker(
+                [1.384, 103.747],
+                {
+}
+            ).addTo(map_6aac6f2571045107ce62c0c41d07c7ac);
+        
+    
+            var icon_1d03e12e6f63fafb4f460296ac3a0a5d = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plane",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_5a3058f9facae318188d656bd79e0f0e = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_0494594a711f3068612608c6dfa3097d = $(`<div id="html_0494594a711f3068612608c6dfa3097d" style="width: 100.0%; height: 100.0%;"><b>ORD-01 (0.65 kg)</b></div>`)[0];
+                popup_5a3058f9facae318188d656bd79e0f0e.setContent(html_0494594a711f3068612608c6dfa3097d);
+            
+        
+
+        marker_28db7309fb6a3cbd8628d6bf0ee2a556.bindPopup(popup_5a3058f9facae318188d656bd79e0f0e)
+        ;
+
+        
+    
+    
+                marker_28db7309fb6a3cbd8628d6bf0ee2a556.setIcon(icon_1d03e12e6f63fafb4f460296ac3a0a5d);
+            
+    
+            var marker_ccea8c9d5fd4c7148bc21bfccf7912d2 = L.marker(
+                [1.4304, 103.8354],
+                {
+}
+            ).addTo(map_6aac6f2571045107ce62c0c41d07c7ac);
+        
+    
+            var icon_891840e39047e469a17dcc658b8076f1 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plane",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_a5ecf8b0a46fe7287a9a8e11e0aa1472 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_b115e166557bb9d5b5bbe8d732eff48b = $(`<div id="html_b115e166557bb9d5b5bbe8d732eff48b" style="width: 100.0%; height: 100.0%;"><b>ORD-02 (0.70 kg)</b></div>`)[0];
+                popup_a5ecf8b0a46fe7287a9a8e11e0aa1472.setContent(html_b115e166557bb9d5b5bbe8d732eff48b);
+            
+        
+
+        marker_ccea8c9d5fd4c7148bc21bfccf7912d2.bindPopup(popup_a5ecf8b0a46fe7287a9a8e11e0aa1472)
+        ;
+
+        
+    
+    
+                marker_ccea8c9d5fd4c7148bc21bfccf7912d2.setIcon(icon_891840e39047e469a17dcc658b8076f1);
+            
+    
+            var marker_68ffdc134eb71a5e9a58f25f91cea7f1 = L.marker(
+                [1.3532, 103.9447],
+                {
+}
+            ).addTo(map_6aac6f2571045107ce62c0c41d07c7ac);
+        
+    
+            var icon_44d9224fef94f6c41f3346eb6b7b5159 = L.AwesomeMarkers.icon(
+                {
+  "markerColor": "blue",
+  "iconColor": "white",
+  "icon": "plane",
+  "prefix": "glyphicon",
+  "extraClasses": "fa-rotate-0",
+}
+            );
+        
+    
+        var popup_d65cd92e9e0354cb294884b9fadf1290 = L.popup({
+  "maxWidth": "100%",
+});
+
+        
+            
+                var html_3d14bbc10f8d62333a169babb3106081 = $(`<div id="html_3d14bbc10f8d62333a169babb3106081" style="width: 100.0%; height: 100.0%;"><b>ORD-04 (0.50 kg)</b></div>`)[0];
+                popup_d65cd92e9e0354cb294884b9fadf1290.setContent(html_3d14bbc10f8d62333a169babb3106081);
+            
+        
+
+        marker_68ffdc134eb71a5e9a58f25f91cea7f1.bindPopup(popup_d65cd92e9e0354cb294884b9fadf1290)
+        ;
+
+        
+    
+    
+                marker_68ffdc134eb71a5e9a58f25f91cea7f1.setIcon(icon_44d9224fef94f6c41f3346eb6b7b5159);
+            
+    
+            var poly_line_2fdc0d419ff265122919adc0a01250c5 = L.polyline(
+                [[1.3, 103.8], [1.384, 103.747], [1.4304, 103.8354], [1.3532, 103.9447], [1.3, 103.8]],
+                {"bubblingMouseEvents": true, "color": "#00e5ff", "dashArray": "6", "dashOffset": null, "fill": false, "fillColor": "#00e5ff", "fillOpacity": 0.2, "fillRule": "evenodd", "lineCap": "round", "lineJoin": "round", "noClip": false, "opacity": 0.85, "smoothFactor": 1.0, "stroke": true, "weight": 3.5}
+            ).addTo(map_6aac6f2571045107ce62c0c41d07c7ac);
+        
+    
+            poly_line_2fdc0d419ff265122919adc0a01250c5.bindTooltip(
+                `<div>
+                     Optimized Flight Path (GAT-VRP)
+                 </div>`,
+                {
+  "sticky": true,
+}
+            );
+        
+    
+            var layer_control_440c8c4427d4e02982eca81d1d211df6_layers = {
+                base_layers : {
+                    "cartodbdarkmatter" : tile_layer_92e45fa446f6929865b355b8efcd8d48,
+                },
+                overlays :  {
+                    "No-Fly Zones (NFZ)" : geo_json_7bc9aeb106ce7746b8198832b47f6f21,
+                },
+            };
+            let layer_control_440c8c4427d4e02982eca81d1d211df6 = L.control.layers(
+                layer_control_440c8c4427d4e02982eca81d1d211df6_layers.base_layers,
+                layer_control_440c8c4427d4e02982eca81d1d211df6_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": true,
+  "autoZIndex": true,
+}
+            ).addTo(map_6aac6f2571045107ce62c0c41d07c7ac);
+
+        
+</script>
+</html>

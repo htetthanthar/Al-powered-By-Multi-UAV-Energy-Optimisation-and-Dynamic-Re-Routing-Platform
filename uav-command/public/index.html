@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark"><title>STRATUM — Singapore UAV Command</title>
+  <link rel="stylesheet" href="/cesium/Widgets/widgets.css"><link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Stratum home"><span class="brandmark">◈</span><span>STRATUM<small>MULTI-UAV INTELLIGENCE</small></span></a>
+    <nav aria-label="Workspace"><button class="nav active" id="operations-tab">Operations</button><button class="nav" id="models-tab">Learning lab <span>↗</span></button></nav>
+    <div class="top-right"><span class="simulation-tag">SIMULATION</span><span id="connection" class="connection">Connecting</span><time id="clock">--:--:-- SGT</time></div>
+  </header>
+  <div class="workspace">
+    <aside class="fleet panel">
+      <div class="panel-heading"><div><span class="eyebrow">FLEET OPERATIONS</span><h2>Airborne assets <span id="fleet-count">16</span></h2></div><span class="tiny-status">SYNCED</span></div>
+      <label class="search"><span>⌕</span><input id="fleet-search" placeholder="Find an aircraft…" aria-label="Find an aircraft"></label>
+      <div class="fleet-label"><span>AIRCRAFT / MISSION</span><span>BATTERY</span></div>
+      <div id="fleet-list" class="fleet-list"></div>
+      <div class="fleet-bottom"><span class="eyebrow">SCENARIO / 001</span><h3>Singapore delivery network</h3><p>Sixteen aircraft. Shared 2D/3D airspace.<br>Weather-aware energy planning.</p><div class="mini-meta"><span>DEPOT</span><strong>Queenstown</strong></div><div class="mini-meta"><span>AIRSPACE</span><strong>Live NFZ sync</strong></div></div>
+    </aside>
+    <main class="map-shell">
+      <div id="globe" aria-label="Interactive Singapore 3D UAV map"></div>
+      <div class="map-vignette"></div>
+      <div class="map-title"><span class="eyebrow">GOD’S-EYE VIEW / SG SECTOR</span><h1>Singapore<span>01</span></h1><p>1.3521° N &nbsp; 103.8198° E <span>WGS 84</span></p></div>
+      <div class="map-status"><i></i><span>LIVE SIMULATION</span><b id="sim-time">T+00:00</b></div>
+      <div class="map-tools" aria-label="Map controls"><button id="home-view" title="Reset Singapore view" aria-label="Reset Singapore view">⌖</button><button id="view-mode" title="Switch to top-down view">2D</button><button id="follow" title="Follow selected UAV">↗</button><button id="layer-toggle" title="Show graph edges">⋈</button></div>
+      <div id="map-error" class="map-error" hidden></div>
+      <div class="map-key"><span><i class="key-route"></i>Optimized plan</span><span><i class="key-baseline"></i>Baseline</span><span><i class="key-zone"></i>Example exclusion + 500 m</span></div>
+      <div class="map-caption">ELLIPSOID TERRAIN · NO PHOTOGRAMMETRY · NOT FOR FLIGHT NAVIGATION</div>
+      <section class="simulation-controls" aria-label="Simulation controls"><button id="play" class="primary">Ⅱ Pause</button><span class="divider"></span><label>TIME SCALE <select id="rate" aria-label="Simulation time scale"><option value="1">1×</option><option value="5">5×</option><option value="20" selected>20×</option><option value="60">60×</option></select></label><button id="reset" class="text-button">↺ Reset</button></section>
+    </main>
+    <aside class="inspector panel">
+      <div class="panel-heading"><span class="eyebrow">AIRCRAFT TELEMETRY</span><span class="tiny-status" id="selected-status">EN ROUTE</span></div>
+      <div class="selected-title"><div><h2 id="selected-id">UAV-ALPHA-01</h2><p id="selected-name">Matrice 350 RTK / delivery mission</p></div><span class="drone-glyph">✣</span></div>
+      <div class="battery-header"><span>STATE OF CHARGE</span><strong id="selected-battery">—</strong></div><div class="battery-track"><div id="battery-fill"></div></div>
+      <div class="telemetry-grid"><div><span>ALTITUDE</span><strong id="altitude">—</strong></div><div><span>AIRSPEED</span><strong id="airspeed">—</strong></div><div><span>POWER DRAW</span><strong id="power">—</strong></div><div><span>PAYLOAD</span><strong id="payload">—</strong></div></div>
+      <div class="coordinates"><span>POSITION</span><code id="coordinates">—</code></div>
+      <div class="actions"><button id="hold">Hold position</button><button id="return">Return to depot</button></div>
+      <div class="section-rule"></div>
+      <div class="panel-heading"><span class="eyebrow">NEURAL PLANNING</span><span class="model-badge">TRAINED / SYNTHETIC</span></div>
+      <div class="model-row"><span class="model-icon">⋈</span><div><h3>GNN route planner</h3><p>Learned weather risk + graph search</p></div><button id="optimize" class="toggle" aria-label="Enable neural optimization" aria-pressed="true"><span></span></button></div>
+      <div class="model-row"><span class="model-icon">∿</span><div><h3>MLP energy surrogate</h3><p id="model-accuracy">Validating synthetic holdout…</p></div></div>
+      <label class="wind-label" for="wind">SIMULATED EASTERLY WIND <strong id="wind-value">4.0 m/s</strong></label><input type="range" id="wind" min="0" max="10" step="0.5" value="4">
+      <div class="risk-note"><span>◇</span><p>Planning aid in a virtual environment. No aircraft connection or flight authorization.</p></div>
+    </aside>
+    <section class="analytics">
+      <article class="metric-card"><div class="card-top"><span class="eyebrow">ENERGY INTELLIGENCE</span><span class="green-label">MLP</span></div><div class="energy-total"><strong id="savings">—</strong><span>predicted plan savings</span></div><div class="comparison"><div><label>BASELINE <b id="baseline-wh">—</b></label><div class="bar baseline"><i></i></div></div><div><label>NEURAL PLAN <b id="planned-wh">—</b></label><div class="bar"><i id="energy-bar"></i></div></div></div><p class="footnote">Same remaining missions · synthetic model estimates</p></article>
+      <article class="power-card"><div class="card-top"><span class="eyebrow">FLEET POWER PROFILE</span><span id="total-power">— W</span></div><svg id="power-chart" viewBox="0 0 500 110" role="img" aria-label="Fleet power history"><path class="chart-grid" d="M0 20H500 M0 55H500 M0 90H500"/><path id="power-area"/><path id="power-line"/></svg><div class="chart-axis"><span>LAST 120 SAMPLES</span><span>SIMULATION TIME →</span></div><div class="model-foot"><span><i></i>MLP inferred electrical power</span><button class="text-button" id="inspect-model">Inspect model ↗</button></div></article>
+      <article class="event-card"><div class="card-top"><span class="eyebrow">MISSION ACTIVITY</span><button class="text-button" id="export">Export snapshot ↗</button></div><div id="events" class="events"></div></article>
+    </section>
+  </div>
+  <footer><span><i></i>HARDWARE DISCONNECTED</span><span id="pipeline-status">SOURCE: SIMULATION · UAV_Database: NOT CONNECTED</span><span>STRATUM / RESEARCH WORKSPACE</span></footer>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="learning-dialog"><div class="dialog-head"><div><span class="eyebrow">MODEL OBSERVABILITY</span><h2>Inside the learning loop.</h2></div><button id="close-model" aria-label="Close learning lab">×</button></div><p>Actual neural training and inference, using synthetic examples only. These are new prototype models, not your existing PyTorch checkpoints.</p><div class="learning-stats" id="learning-stats"></div><div class="learning-charts"><div><h3>MLP training loss</h3><svg id="loss-chart" viewBox="0 0 440 180" aria-label="Actual MLP training MSE"></svg><small>Epoch → · normalized mean squared error</small></div><div><h3>Held-out energy validation</h3><svg id="fit-chart" viewBox="0 0 440 180" aria-label="Synthetic physical power versus model prediction"></svg><small>Reference watts → · inferred watts ↑</small></div></div><div class="architecture"><h3>How decisions are made</h3><p>Local + neighboring weather → learned GNN node risk → risk-weighted shortest path → MLP speed search → predicted mission energy.</p><p>Every route segment is checked against the example 500 m exclusion buffers. This is not an authoritative airspace dataset or a hardware safety system.</p></div></dialog>
+  <script>window.CESIUM_BASE_URL='/cesium/';</script><script src="/cesium/Cesium.js"></script><script type="module" src="/app.js"></script>
+</body></html>

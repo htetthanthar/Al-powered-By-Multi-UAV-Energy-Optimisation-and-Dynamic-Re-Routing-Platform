@@ -1,0 +1,767 @@
+{
+  "id": null,
+  "uid": "uav-energy-surrogate-live",
+  "title": "03 · UAV Fleet Neural Energy Surrogate · DEMO",
+  "description": "Payload, climb, voltage, and energy distributions; synthetic fixture data. All incoming samples currently come from an explicitly synthetic producer. No physical drone or trained model is connected.",
+  "schemaVersion": 39,
+  "version": 1,
+  "style": "dark",
+  "editable": true,
+  "refresh": "10s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "tags": [
+    "uav-suite",
+    "simulation"
+  ],
+  "links": [
+    {
+      "title": "01 · Pre-MLP Meteorological Battery Drain",
+      "url": "/d/uav-pre-mlp-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "02 · Post-MLP Energy Drain Optimization",
+      "url": "/d/uav-post-mlp-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "03 · UAV Fleet Neural Energy Surrogate",
+      "url": "/d/uav-energy-surrogate-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "04 · GNN Meteorological Routing",
+      "url": "/d/uav-gnn-routing-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "05 · Policy Training Convergence",
+      "url": "/d/uav-training-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "06 · MLP Energy Surrogate Accuracy",
+      "url": "/d/uav-accuracy-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    },
+    {
+      "title": "07 · Routing Framework Comparison",
+      "url": "/d/uav-comparison-live?theme=dark",
+      "type": "link",
+      "keepTime": true
+    }
+  ],
+  "panels": [
+    {
+      "id": 1,
+      "type": "text",
+      "title": "03 · UAV Fleet Neural Energy Surrogate",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 24,
+        "h": 3
+      },
+      "options": {
+        "mode": "markdown",
+        "content": "**SIMULATED LIVE DATA** · Payload, climb, voltage, and energy distributions; synthetic fixture data.\n\nRefresh: 10 seconds. Statistics use fresh samples only. These are illustrative scenarios, not flight validation or measured ML gains."
+      }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Mean energy consumption",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT mean(\"energy_whkm\") FROM (SELECT last(\"energy_whkm\") AS \"energy_whkm\" FROM \"uav_suite_energy\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' AND \"mode\" = 'baseline' GROUP BY \"route_id\")",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:Wh/km",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00D9F5"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Peak power",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 6,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT max(\"power_w\") FROM (SELECT last(\"power_w\") AS \"power_w\" FROM \"uav_suite_energy\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' AND \"mode\" = 'baseline' GROUP BY \"route_id\")",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F2495C"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Mean payload",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT mean(\"payload_kg\") FROM (SELECT last(\"payload_kg\") AS \"payload_kg\" FROM \"uav_suite_energy\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' AND \"mode\" = 'baseline' GROUP BY \"route_id\")",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "masskg",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00C896"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "Maximum current",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 18,
+        "y": 3,
+        "w": 6,
+        "h": 4
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT max(\"current_a\") FROM (SELECT last(\"current_a\") AS \"current_a\" FROM \"uav_suite_energy\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' AND \"mode\" = 'baseline' GROUP BY \"route_id\")",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "amp",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FFB020"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "reduceOptions": {
+          "values": false,
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": ""
+        },
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "textMode": "auto"
+      }
+    },
+    {
+      "id": 6,
+      "type": "xychart",
+      "title": "Specific energy vs airspeed",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 7,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"airspeed_ms\") AS \"airspeed_ms\", last(\"energy_whkm\") AS \"energy_whkm\" FROM \"uav_suite_energy\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' AND \"mode\" = 'baseline' GROUP BY \"route_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:Wh/km",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#00D9F5"
+          },
+          "decimals": 2,
+          "custom": {
+            "show": "points",
+            "pointSize": {
+              "fixed": 6
+            },
+            "fillOpacity": 85,
+            "lineWidth": 2,
+            "axisLabel": "Specific energy (Wh/km)"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "airspeed_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "velocityms"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Airspeed (m/s)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "name": {
+              "fixed": "Specific energy (Wh/km)"
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "airspeed_ms"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "energy_whkm"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 7,
+      "type": "xychart",
+      "title": "Electrical power vs wind vector",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 12,
+        "y": 7,
+        "w": 12,
+        "h": 10
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"headwind_ms\") AS \"headwind_ms\", last(\"power_w\") AS \"power_w\" FROM \"uav_suite_energy\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' AND \"mode\" = 'baseline' GROUP BY \"route_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#F2495C"
+          },
+          "decimals": 2,
+          "custom": {
+            "show": "points",
+            "pointSize": {
+              "fixed": 6
+            },
+            "fillOpacity": 85,
+            "lineWidth": 2,
+            "axisLabel": "Electrical power (W)"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "headwind_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "velocityms"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Headwind (m/s)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "name": {
+              "fixed": "Electrical power (W)"
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "headwind_ms"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "power_w"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 8,
+      "type": "xychart",
+      "title": "Energy penalty vs climb rate",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 0,
+        "y": 17,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"climb_ms\") AS \"climb_ms\", last(\"energy_whkm\") AS \"energy_whkm\" FROM \"uav_suite_energy\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' AND \"mode\" = 'baseline' GROUP BY \"route_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:Wh/km",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#FFB020"
+          },
+          "decimals": 2,
+          "custom": {
+            "show": "points",
+            "pointSize": {
+              "fixed": 6
+            },
+            "fillOpacity": 85,
+            "lineWidth": 2,
+            "axisLabel": "Specific energy (Wh/km)"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "climb_ms"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "velocityms"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Climb rate (m/s)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "name": {
+              "fixed": "Specific energy (Wh/km)"
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "climb_ms"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "energy_whkm"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 9,
+      "type": "xychart",
+      "title": "6S pack voltage vs SoC",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 8,
+        "y": 17,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"battery_soc_pct\") AS \"battery_soc_pct\", last(\"voltage_v\") AS \"voltage_v\" FROM \"uav_suite_energy\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' AND \"mode\" = 'baseline' GROUP BY \"route_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "volt",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#AD5CFF"
+          },
+          "decimals": 2,
+          "custom": {
+            "show": "points",
+            "pointSize": {
+              "fixed": 6
+            },
+            "fillOpacity": 85,
+            "lineWidth": 2,
+            "axisLabel": "Pack voltage (V)"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "battery_soc_pct"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "State of charge (%)"
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "showLegend": true,
+          "placement": "bottom",
+          "displayMode": "list"
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        },
+        "mapping": "manual",
+        "series": [
+          {
+            "name": {
+              "fixed": "Pack voltage (V)"
+            },
+            "frame": {
+              "matcher": {
+                "id": "byIndex",
+                "options": 0
+              }
+            },
+            "x": {
+              "matcher": {
+                "id": "byName",
+                "options": "battery_soc_pct"
+              }
+            },
+            "y": {
+              "matcher": {
+                "id": "byName",
+                "options": "voltage_v"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": 10,
+      "type": "histogram",
+      "title": "Fleet energy rate distribution",
+      "datasource": {
+        "type": "influxdb",
+        "uid": "${DS_UAV_DATABASE}"
+      },
+      "gridPos": {
+        "x": 16,
+        "y": 17,
+        "w": 8,
+        "h": 9
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "rawQuery": true,
+          "resultFormat": "table",
+          "query": "SELECT last(\"energy_whkm\") AS \"energy_whkm\" FROM \"uav_suite_energy\" WHERE $timeFilter AND time > now() - 30s AND \"source\" = 'simulation' AND \"mode\" = 'baseline' GROUP BY \"route_id\"",
+          "datasource": {
+            "type": "influxdb",
+            "uid": "${DS_UAV_DATABASE}"
+          }
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "suffix:Wh/km",
+          "noValue": "No fresh data",
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#AD5CFF"
+          },
+          "decimals": 2
+        },
+        "overrides": []
+      },
+      "options": {
+        "combine": true,
+        "legend": {
+          "showLegend": false
+        },
+        "tooltip": {
+          "mode": "single"
+        }
+      },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "names": [
+                "energy_whkm"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "__inputs": [
+    {
+      "name": "DS_UAV_DATABASE",
+      "label": "UAV_Database",
+      "description": "Select the separate InfluxDB datasource whose database is UAV_Database. Do not select the cold-chain datasource.",
+      "type": "datasource",
+      "pluginId": "influxdb",
+      "pluginName": "InfluxDB"
+    }
+  ]
+}

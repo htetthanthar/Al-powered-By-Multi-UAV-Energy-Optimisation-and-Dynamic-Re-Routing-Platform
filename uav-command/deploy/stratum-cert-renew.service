@@ -1,0 +1,7 @@
+[Unit]
+Description=Renew STRATUM IP-only HTTPS certificate
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=oneshot
+ExecStart=/opt/stratum/acme/bin/certbot renew --quiet --config-dir /etc/letsencrypt-stratum --work-dir /var/lib/letsencrypt-stratum --logs-dir /var/log/letsencrypt-stratum --deploy-hook /opt/stratum/reload-nginx.sh

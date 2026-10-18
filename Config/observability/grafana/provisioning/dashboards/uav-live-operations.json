@@ -1,0 +1,91 @@
+{
+  "annotations": {"list": []},
+  "editable": false,
+  "description": "Live updates from the project's synthetic telemetry generator. These values are simulated, not measurements from a connected drone.",
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {"type": "prometheus", "uid": "uav-prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}, {"color": "orange", "value": 20}, {"color": "green", "value": 40}]}, "unit": "percent"}, "overrides": []},
+      "gridPos": {"h": 7, "w": 6, "x": 0, "y": 0},
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"expr": "uav_battery_soc_percent", "refId": "A"}],
+      "title": "Fleet Battery State of Charge",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "uav-prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 350}, {"color": "red", "value": 450}]}, "unit": "watt"}, "overrides": []},
+      "gridPos": {"h": 7, "w": 6, "x": 6, "y": 0},
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"expr": "uav_power_watts", "refId": "A"}],
+      "title": "Current Power Draw",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "uav-prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "unit": "kmh"}, "overrides": []},
+      "gridPos": {"h": 7, "w": 6, "x": 12, "y": 0},
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"expr": "uav_ground_speed_kmh", "refId": "A"}],
+      "title": "Ground Speed",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "uav-prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "orange", "value": 20}, {"color": "red", "value": 30}]}, "unit": "kmh"}, "overrides": []},
+      "gridPos": {"h": 7, "w": 6, "x": 18, "y": 0},
+      "options": {"colorMode": "background", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "auto"},
+      "targets": [{"expr": "uav_wind_speed_kmh", "refId": "A"}],
+      "title": "Wind Magnitude",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "uav-prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "unit": "percent"}, "overrides": []},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 7},
+      "options": {"legend": {"calcs": ["lastNotNull", "min", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"expr": "uav_battery_soc_percent", "legendFormat": "{{drone_id}}", "refId": "A"}],
+      "title": "Live Battery SoC",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "uav-prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "unit": "watt"}, "overrides": []},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 7},
+      "options": {"legend": {"calcs": ["lastNotNull", "min", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"expr": "uav_power_watts", "legendFormat": "{{drone_id}}", "refId": "A"}],
+      "title": "Live Power Draw",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "uav-prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "unit": "kmh"}, "overrides": []},
+      "gridPos": {"h": 9, "w": 12, "x": 0, "y": 16},
+      "options": {"legend": {"calcs": ["lastNotNull", "min", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "multi", "sort": "desc"}},
+      "targets": [{"expr": "uav_ground_speed_kmh", "legendFormat": "{{drone_id}}", "refId": "A"}, {"expr": "uav_wind_speed_kmh", "legendFormat": "Wind", "refId": "B"}],
+      "title": "Ground Speed and Wind",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "prometheus", "uid": "uav-prometheus"},
+      "fieldConfig": {"defaults": {"color": {"mode": "palette-classic"}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 9, "w": 12, "x": 12, "y": 16},
+      "options": {"legend": {"calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true}, "tooltip": {"mode": "single", "sort": "none"}},
+      "targets": [{"expr": "rate(uav_telemetry_frames_total[1m])", "legendFormat": "{{drone_id}} frames/s", "refId": "A"}, {"expr": "uav_telemetry_connected_clients", "legendFormat": "Dashboard clients", "refId": "B"}],
+      "title": "Telemetry Health",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 39,
+  "tags": ["uav", "live", "operations"],
+  "templating": {"list": []},
+  "time": {"from": "now-15m", "to": "now"},
+  "timezone": "browser",
+  "title": "UAV Live Operations — SIMULATED DATA",
+  "uid": "uav-live-operations",
+  "version": 1
+}

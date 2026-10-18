@@ -1,0 +1,75 @@
+# ===========================================================
+# SYSTEM CONFIGURATION: UAV ROUTE OPTIMIZATION & SCHEDULING ENGINE
+# ===========================================================
+
+system:
+  environment: "production"
+  random_seed: 42
+  log_level: "INFO"
+  data_lake_path: "data/uav_mission_data.duckdb"
+
+microservices:
+  gateway:
+    host: "127.0.0.1"
+    port: 8000
+  matrix_service:
+    host: "127.0.0.1"
+    port: 8001
+  weather_service:
+    host: "127.0.0.1"
+    port: 8002
+  telemetry_streamer:
+    host: "127.0.0.1"
+    port: 8765
+
+operational_constraints:
+  max_payload_kg: 2.0
+  max_flight_time_min: 55.0
+  cruise_speed_kmh: 65.0
+  service_time_per_drop_min: 2.0
+  min_battery_reserve_pct: 20.0
+  emergency_battery_soc_pct: 15.0
+
+weather_thresholds:
+  max_wind_speed_kmh: 30.0
+  max_wind_speed_ms: 8.33
+  allow_rain: false
+  max_hover_hold_seconds: 180.0
+
+deep_learning_models:
+  energy_surrogate_mlp:
+    checkpoint_path: "checkpoints/best_energy_mlp.pth"
+    input_dim: 5
+    hidden_units: [128, 64, 32]
+    learning_rate: 0.001
+    batch_size: 128
+
+  weather_lstm:
+    checkpoint_path: "checkpoints/best_weather_lstm.pth"
+    input_dim: 5
+    hidden_dim: 64
+    num_layers: 2
+    sequence_length: 12
+    learning_rate: 0.001
+
+  routing_attention_network:
+    checkpoint_path: "checkpoints/best_vrp_policy.pth"
+    node_input_dim: 3
+    embedding_dim: 128
+    num_attention_heads: 8
+    num_encoder_layers: 3
+    learning_rate: 0.0001
+    reinforce_baseline: "greedy_rollout"
+
+external_apis:
+  google_maps:
+    geocoding_endpoint: "https://maps.googleapis.com/maps/api/geocode/json"
+    distance_matrix_endpoint: "https://maps.googleapis.com/maps/api/distancematrix/json"
+  open_weather:
+    endpoint: "https://api.openweathermap.org/data/2.5/forecast"
+    poll_interval_seconds: 300
+
+mavlink_telemetry:
+  connection_string: "udpin:localhost:14540"
+  baudrate: 57600
+  heartbeat_timeout_s: 5.0

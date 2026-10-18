@@ -1,0 +1,18 @@
+// Add as a separate Pipeline job on an agent running on the InfluxDB VPS.
+pipeline {
+  agent any
+  options {
+    skipDefaultCheckout(true)
+    disableConcurrentBuilds()
+    timeout(time: 2, unit: 'MINUTES')
+    buildDiscarder(logRotator(numToKeepStr: '30'))
+  }
+  triggers { cron('* * * * *') }
+  stages {
+    stage('UAV dashboard simulation') {
+      steps {
+        sh 'python3 -B /opt/uav-grafana-demo/suite_emitter.py --database UAV_Database --write --batches 6'
+      }
+    }
+  }
+}
