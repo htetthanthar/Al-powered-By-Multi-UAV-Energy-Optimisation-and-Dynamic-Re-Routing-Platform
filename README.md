@@ -1,7 +1,7 @@
 # Multi-UAV Energy Optimisation and Dynamic Re-Routing Platform
 
 **Author:** Than Thar Han  
-**Institution:** Coventry University / PSB Academy (`6002CEM` Individual Project)
+ Individual Final Project
 
 An end-to-end simulation and command platform for multi-UAV last-mile parcel delivery in Singapore's low-altitude urban airspace (`< 60 m` AGL, `103.70°E – 104.00°E`, `1.275°N – 1.450°N`), combining:
 
