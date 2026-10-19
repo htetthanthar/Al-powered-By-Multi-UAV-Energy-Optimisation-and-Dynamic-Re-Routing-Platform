@@ -227,6 +227,38 @@ try {
   });
   console.log(`Frame 1 SoC: ${f1Drone1Soc}, Frame 2 selected SoC: ${f2SelectedSoc}`);
 
+  // Assertion 3b: Verify Drone Names, IDs, and Models are 100% consistent across Tab 1, Tab 2, and Tab 3
+  const f1Drones = await f1.evaluate(() => {
+    const rows = Array.from(document.querySelectorAll('#telemetry-body tr'));
+    return rows.map(r => ({
+      id: r.querySelector('.drone-id-tag')?.textContent?.trim(),
+      model: r.querySelector('.tag-model')?.textContent?.trim()
+    }));
+  });
+  const f2Drones = await f2.evaluate(() => {
+    return window.AeroSyncBus.getSnapshot().drones.map(d => ({
+      id: d.id,
+      model: d.name || d.model
+    }));
+  });
+  const f3Drones = await f3.evaluate(() => {
+    return window.fleetData.map(d => ({
+      id: d.id,
+      model: d.model
+    }));
+  });
+
+  assert.equal(f1Drones.length, 16, 'Tab 1 has 16 assets');
+  assert.equal(f2Drones.length, 16, 'Tab 2 has 16 assets');
+  assert.equal(f3Drones.length, 16, 'Tab 3 has 16 assets');
+  for (let i = 0; i < 16; i++) {
+    assert.equal(f3Drones[i].id, f1Drones[i].id, `Drone ${i} ID (${f3Drones[i].id}) matches Tab 1`);
+    assert.equal(f3Drones[i].id, f2Drones[i].id, `Drone ${i} ID (${f3Drones[i].id}) matches Tab 2`);
+    assert.equal(f3Drones[i].model, f1Drones[i].model, `Drone ${i} model (${f3Drones[i].model}) matches Tab 1`);
+    assert.equal(f3Drones[i].model, f2Drones[i].model, `Drone ${i} model (${f3Drones[i].model}) matches Tab 2`);
+  }
+  console.log('✓ Assertion 3b PASSED: All 16 Drone IDs and Models match 100% across Tab 1, Tab 2, and Tab 3.');
+
   // Assertion 4: Bidirectional selection: Select UAV-CHARLIE-03 in Tab 3 -> check Tab 1 and Tab 2
   console.log('Testing Selection: Clicking UAV-CHARLIE-03 in Tab 3...');
   await f3.evaluate(() => {

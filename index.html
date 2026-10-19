@@ -188,7 +188,7 @@
                         <span class="text-xs font-mono font-bold text-white tracking-wide">THEMISTO-CAB</span>
                         <span class="text-slate-600">|</span>
                         <span class="text-xs font-mono text-slate-400 font-semibold">AIRCRAFT</span>
-                        <span id="hdr-aircraft" class="text-xs font-mono font-bold text-cyan-300">UAV-ALPHA-01</span>
+                        <span id="hdr-aircraft" class="text-xs font-mono font-bold text-cyan-300">UAV-ALPHA-01 (Matrice 350 RTK)</span>
                     </div>
                     <div class="flex items-center space-x-3 text-[11px] font-mono mt-0.5">
                         <span class="text-slate-400">MISSION: <strong id="hdr-mission-state" class="text-emerald-400">● ACTIVE</strong></span>
@@ -373,7 +373,7 @@
                         <i data-lucide="crosshair" class="w-4 h-4"></i>
                         <span>SYNTHETIC VISION HUD // PFD</span>
                     </div>
-                    <span id="pfd-uav-id" class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-400/30 font-bold">UAV-ALPHA-01</span>
+                    <span id="pfd-uav-id" class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-400/30 font-bold">UAV-ALPHA-01 · Matrice 350 RTK</span>
                 </div>
 
                 <div class="relative w-full flex-1 bg-slate-950 rounded-lg border border-slate-800 overflow-hidden flex items-center justify-center min-h-[140px]">
@@ -937,26 +937,27 @@
         setInterval(updateAvionicsClocks, 1000);
         updateAvionicsClocks();
 
-        // 16-Airborne Assets Fleet Definition
+        // 16-Airborne Assets Fleet Definition (Synchronized with Tab 1 2D Telemetry & Tab 2 3D Cesium)
         const fleetData = [
-            { id: "UAV-ALPHA-01", callsign: "DF-1024", model: "Matrice 350 RTK", speed: 42.8, status: "On Patrol", alt: 48.2, soc: 89.5, power: 1.169, heading: 325, distanceRp: 24.7, progressPct: 82 },
-            { id: "UAV-BRAVO-02", callsign: "DF-1023", model: "EVTOL Long-Range", speed: 38.1, status: "En Route", alt: 55.0, soc: 88.1, power: 1.240, heading: 45, distanceRp: 18.2, progressPct: 65 },
-            { id: "UAV-CHARLIE-03", callsign: "DF-1022", model: "Heavy-Lift Quad", speed: 44.7, status: "Monitoring", alt: 42.6, soc: 94.2, power: 1.350, heading: 90, distanceRp: 12.5, progressPct: 90 },
-            { id: "UAV-DELTA-04", callsign: "DF-1021", model: "Inspection Hexa", speed: 36.4, status: "On Patrol", alt: 38.0, soc: 86.7, power: 1.050, heading: 140, distanceRp: 30.1, progressPct: 45 },
-            { id: "UAV-ECHO-05", callsign: "DF-1056", model: "Quantum VTOL V2", speed: 69.7, status: "Monitoring", alt: 58.5, soc: 91.8, power: 1.480, heading: 210, distanceRp: 22.4, progressPct: 78 },
-            { id: "UAV-FOXTROT-06", callsign: "DF-1019", model: "Falcon Express", speed: 52.0, status: "En Route", alt: 50.5, soc: 92.4, power: 1.190, heading: 280, distanceRp: 16.8, progressPct: 60 },
-            { id: "UAV-GOLF-07", callsign: "DF-1033", model: "Solar-Endurance 6S", speed: 34.5, status: "On Patrol", alt: 57.0, soc: 96.0, power: 0.940, heading: 15, distanceRp: 34.0, progressPct: 35 },
-            { id: "UAV-HOTEL-08", callsign: "DF-1044", model: "Urban Med-Courier", speed: 46.6, status: "On Patrol", alt: 44.0, soc: 89.3, power: 1.220, heading: 60, distanceRp: 14.2, progressPct: 88 },
-            { id: "UAV-INDIA-09", callsign: "DF-1012", model: "Scout Quad V3", speed: 39.0, status: "Monitoring", alt: 40.0, soc: 88.0, power: 1.080, heading: 110, distanceRp: 27.5, progressPct: 50 },
-            { id: "UAV-JULIETT-10", callsign: "DF-1015", model: "SkyRanger G2", speed: 49.2, status: "En Route", alt: 56.0, soc: 91.4, power: 1.310, heading: 175, distanceRp: 19.8, progressPct: 72 },
-            { id: "UAV-KILO-11", callsign: "DF-1018", model: "AeroPulse X4", speed: 43.1, status: "On Patrol", alt: 46.0, soc: 89.0, power: 1.150, heading: 235, distanceRp: 21.0, progressPct: 68 },
-            { id: "UAV-LIMA-12", callsign: "DF-1025", model: "LogiCopter 8X", speed: 47.8, status: "Monitoring", alt: 52.0, soc: 90.2, power: 1.270, heading: 290, distanceRp: 15.3, progressPct: 84 },
-            { id: "UAV-MIKE-13", callsign: "DF-1029", model: "SurveyWing RTK", speed: 41.0, status: "On Patrol", alt: 43.0, soc: 87.1, power: 1.120, heading: 340, distanceRp: 28.9, progressPct: 40 },
-            { id: "UAV-NOVEMBER-14", callsign: "DF-1035", model: "MedEvac Hornet", speed: 37.5, status: "En Route", alt: 39.0, soc: 86.8, power: 1.090, heading: 25, distanceRp: 32.1, progressPct: 30 },
-            { id: "UAV-OSCAR-15", callsign: "DF-1038", model: "StealthGrid 4S", speed: 45.5, status: "Monitoring", alt: 47.0, soc: 88.5, power: 1.210, heading: 85, distanceRp: 20.6, progressPct: 75 },
-            { id: "UAV-PAPA-16", callsign: "DF-1048", model: "Titan Cargo Heavy", speed: 39.2, status: "On Patrol", alt: 53.0, soc: 92.0, power: 1.420, heading: 130, distanceRp: 11.4, progressPct: 92 }
+            { id: "UAV-ALPHA-01", name: "Matrice 350 RTK", model: "Matrice 350 RTK", callsign: "ALPHA-01", corridorId: "RT-01", destinationName: "RT-01 · Jurong West", speed: 42.8, status: "On Patrol", alt: 48.2, soc: 89.5, power: 1.169, heading: 325, distanceRp: 24.7, progressPct: 82 },
+            { id: "UAV-BRAVO-02", name: "EVTOL Long-Range", model: "EVTOL Long-Range", callsign: "BRAVO-02", corridorId: "RT-02", destinationName: "RT-02 · Yishun North", speed: 38.1, status: "En Route", alt: 55.0, soc: 88.1, power: 1.240, heading: 45, distanceRp: 18.2, progressPct: 65 },
+            { id: "UAV-CHARLIE-03", name: "Heavy-Lift Quad", model: "Heavy-Lift Quad", callsign: "CHARLIE-03", corridorId: "RT-03", destinationName: "RT-03 · Tampines Regional", speed: 44.7, status: "Monitoring", alt: 42.6, soc: 94.2, power: 1.350, heading: 90, distanceRp: 12.5, progressPct: 90 },
+            { id: "UAV-DELTA-04", name: "Inspection Hexa", model: "Inspection Hexa", callsign: "DELTA-04", corridorId: "RT-04", destinationName: "RT-04 · Marina Bay Downtown", speed: 36.4, status: "On Patrol", alt: 38.0, soc: 86.7, power: 1.050, heading: 140, distanceRp: 30.1, progressPct: 45 },
+            { id: "UAV-ECHO-05", name: "Quantum VTOL V2", model: "Quantum VTOL V2", callsign: "ECHO-05", corridorId: "RT-05", destinationName: "RT-05 · Bukit Panjang", speed: 69.7, status: "Monitoring", alt: 58.5, soc: 91.8, power: 1.480, heading: 210, distanceRp: 22.4, progressPct: 78 },
+            { id: "UAV-FOXTROT-06", name: "Falcon Express", model: "Falcon Express", callsign: "FOXTROT-06", corridorId: "RT-06", destinationName: "RT-06 · Punggol Digital", speed: 52.0, status: "En Route", alt: 50.5, soc: 92.4, power: 1.190, heading: 280, distanceRp: 16.8, progressPct: 60 },
+            { id: "UAV-GOLF-07", name: "Solar-Endurance 6S", model: "Solar-Endurance 6S", callsign: "GOLF-07", corridorId: "RT-07", destinationName: "RT-07 · Bishan Central", speed: 34.5, status: "On Patrol", alt: 57.0, soc: 96.0, power: 0.940, heading: 15, distanceRp: 34.0, progressPct: 35 },
+            { id: "UAV-HOTEL-08", name: "Urban Med-Courier", model: "Urban Med-Courier", callsign: "HOTEL-08", corridorId: "RT-08", destinationName: "RT-08 · Bedok Coastal", speed: 46.6, status: "On Patrol", alt: 44.0, soc: 89.3, power: 1.220, heading: 60, distanceRp: 14.2, progressPct: 88 },
+            { id: "UAV-INDIA-09", name: "Scout Quad V3", model: "Scout Quad V3", callsign: "INDIA-09", corridorId: "RT-09", destinationName: "RT-09 · Clementi West", speed: 39.0, status: "Monitoring", alt: 40.0, soc: 88.0, power: 1.080, heading: 110, distanceRp: 27.5, progressPct: 50 },
+            { id: "UAV-JULIETT-10", name: "SkyRanger G2", model: "SkyRanger G2", callsign: "JULIETT-10", corridorId: "RT-10", destinationName: "RT-10 · Woodlands North", speed: 49.2, status: "En Route", alt: 56.0, soc: 91.4, power: 1.310, heading: 175, distanceRp: 19.8, progressPct: 72 },
+            { id: "UAV-KILO-11", name: "AeroPulse X4", model: "AeroPulse X4", callsign: "KILO-11", corridorId: "RT-11", destinationName: "RT-11 · Ang Mo Kio", speed: 43.1, status: "On Patrol", alt: 46.0, soc: 89.0, power: 1.150, heading: 235, distanceRp: 21.0, progressPct: 68 },
+            { id: "UAV-LIMA-12", name: "LogiCopter 8X", model: "LogiCopter 8X", callsign: "LIMA-12", corridorId: "RT-12", destinationName: "RT-12 · Serangoon / Hougang", speed: 47.8, status: "Monitoring", alt: 52.0, soc: 90.2, power: 1.270, heading: 290, distanceRp: 15.3, progressPct: 84 },
+            { id: "UAV-MIKE-13", name: "SurveyWing RTK", model: "SurveyWing RTK", callsign: "MIKE-13", corridorId: "RT-13", destinationName: "RT-13 · Jurong East", speed: 41.0, status: "On Patrol", alt: 43.0, soc: 87.1, power: 1.120, heading: 340, distanceRp: 28.9, progressPct: 40 },
+            { id: "UAV-NOVEMBER-14", name: "MedEvac Hornet", model: "MedEvac Hornet", callsign: "NOVEMBER-14", corridorId: "RT-14", destinationName: "RT-14 · HarbourFront South", speed: 37.5, status: "En Route", alt: 39.0, soc: 86.8, power: 1.090, heading: 25, distanceRp: 32.1, progressPct: 30 },
+            { id: "UAV-OSCAR-15", name: "StealthGrid 4S", model: "StealthGrid 4S", callsign: "OSCAR-15", corridorId: "RT-15", destinationName: "RT-15 · Kallang Basin", speed: 45.5, status: "Monitoring", alt: 47.0, soc: 88.5, power: 1.210, heading: 85, distanceRp: 20.6, progressPct: 75 },
+            { id: "UAV-PAPA-16", name: "Titan Cargo Heavy", model: "Titan Cargo Heavy", callsign: "PAPA-16", corridorId: "RT-16", destinationName: "RT-16 · Changi North", speed: 39.2, status: "On Patrol", alt: 53.0, soc: 92.0, power: 1.420, heading: 130, distanceRp: 11.4, progressPct: 92 }
         ];
 
+        window.fleetData = fleetData;
         window.selectedDroneId = "UAV-ALPHA-01";
         let selectedDroneId = window.selectedDroneId;
         let isRcOverride = false;
@@ -976,13 +977,14 @@
                 else if (d.status === 'Avoiding NFZ') dotColor = 'bg-amber-300';
                 else dotColor = 'bg-cyan-400';
 
+                const callsign = d.callsign || d.id.replace('UAV-', '');
                 return `
                     <div onclick="selectDrone('${d.id}')" class="p-2 rounded-lg cursor-pointer transition flex items-center justify-between border ${isSelected ? 'bg-slate-900 border-orange-500/60 shadow-md' : 'bg-slate-950/60 border-slate-800/80 hover:bg-slate-900/50'}">
                         <div class="flex items-center space-x-2">
                             <span class="w-2 h-2 rounded-full ${dotColor}"></span>
                             <div>
-                                <span class="font-bold ${isSelected ? 'text-orange-400' : 'text-slate-200'}">${d.callsign} <span class="text-[10px] text-slate-500 font-normal">(${d.id})</span></span>
-                                <span class="text-[10px] text-slate-400 block">${d.model}</span>
+                                <span class="font-bold ${isSelected ? 'text-orange-400' : 'text-slate-200'}">${d.id} <span class="text-[10px] text-slate-400 font-normal">(${callsign})</span></span>
+                                <span class="text-[10px] text-slate-400 block">${d.model || d.name}${d.destinationName ? ' · ' + d.destinationName : ''}</span>
                             </div>
                         </div>
                         <div class="text-right">
@@ -1001,10 +1003,10 @@
             if (!drone) return;
 
             const elHdr = document.getElementById('hdr-aircraft');
-            if (elHdr) elHdr.innerText = `${drone.id} (${drone.model})`;
+            if (elHdr) elHdr.innerText = `${drone.id} (${drone.model || drone.name})`;
 
             const elPfdId = document.getElementById('pfd-uav-id');
-            if (elPfdId) elPfdId.innerText = drone.id;
+            if (elPfdId) elPfdId.innerText = `${drone.id} · ${drone.model || drone.name}`;
 
             const elPower = document.getElementById('power-val');
             if (elPower) elPower.innerHTML = `${drone.power.toFixed(3)} <span class="text-xs text-slate-400 font-normal">kW</span>`;
@@ -1062,7 +1064,7 @@
             if (elCorridor) elCorridor.style.width = `${drone.progressPct}%`;
 
             const elRouteStage = document.getElementById('route-stage-text');
-            if (elRouteStage) elRouteStage.innerText = `${drone.id} ${drone.status.toUpperCase()} (${drone.alt.toFixed(1)}m AGL)`;
+            if (elRouteStage) elRouteStage.innerText = `${drone.id} (${drone.model || drone.name}) ${drone.status.toUpperCase()} (${drone.alt.toFixed(1)}m AGL)`;
 
             // Update Compass Needle
             const elNeedle = document.getElementById('compass-needle');
@@ -1093,9 +1095,10 @@
             if (window.AeroSyncBus) {
                 window.AeroSyncBus.selectDrone(id);
             }
+            const drone = fleetData.find(d => d.id === id);
             updateSelectedDroneUI(id);
             renderFleetList();
-            addSyslog(`Telemetry focus switched to asset: [${id}]`, 'INFO');
+            addSyslog(`Telemetry focus switched to asset: [${id}] ${drone ? drone.model : ''}`, 'INFO');
         }
 
         function applySynchronizedTelemetry(snap, selectedId) {
@@ -1110,8 +1113,10 @@
                 if (!drone) {
                     drone = {
                         id: srv.id,
-                        callsign: srv.name || srv.id,
-                        model: srv.model || "UAV Asset",
+                        name: srv.name || srv.model || srv.id,
+                        callsign: srv.id.replace('UAV-', ''),
+                        model: srv.model || srv.name || "UAV Asset",
+                        destinationName: srv.destinationName || "",
                         speed: 0,
                         status: "On Patrol",
                         alt: 50,
@@ -1123,6 +1128,10 @@
                         temp_c: 35.0
                     };
                     fleetData.push(drone);
+                } else {
+                    if (srv.name) drone.name = srv.name;
+                    if (srv.model) drone.model = srv.model;
+                    if (srv.destinationName) drone.destinationName = srv.destinationName;
                 }
 
                 drone.alt = Number(srv.alt_m ?? srv.altitude ?? drone.alt);
