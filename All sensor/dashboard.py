@@ -1291,4 +1291,4 @@ with tab_3d:
 with tab_hud:
     index_hud_path = ROOT_DIR / "index.html"
     if index_hud_path.exists():
-        components.html(index_hud_path.read_text(encoding="utf-8"), height=960, scrolling=True)
+        components.html(index_hud_path.read_text(encoding="utf-8"), height=1020, scrolling=True)

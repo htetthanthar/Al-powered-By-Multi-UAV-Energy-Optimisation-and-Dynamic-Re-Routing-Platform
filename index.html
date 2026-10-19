@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AERO-AI Autonomous Fleet Command // Singapore Sector UTM</title>
+    <title>AERO-AI Autonomous Fleet Command // Integrated Weather, Sensors & VSLAM</title>
 
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -15,19 +15,20 @@
                 extend: {
                     colors: {
                         slate: {
-                            950: '#020617',
-                            900: '#0b1120',
-                            850: '#0f172a',
-                            800: '#1e293b',
-                            750: '#273549',
-                            700: '#334155'
+                            950: '#070a12',
+                            900: '#0d131f',
+                            850: '#121927',
+                            800: '#1b2333',
+                            750: '#232d40',
+                            700: '#323d52'
                         },
                         avionics: {
                             cyan: '#00e5ff',
                             emerald: '#10b981',
                             amber: '#f59e0b',
                             rose: '#ef4444',
-                            violet: '#a855f7',
+                            orange: '#f07632',
+                            violet: '#a855f7'
                         }
                     },
                     fontFamily: {
@@ -39,26 +40,17 @@
         }
     </script>
 
-    <!-- Leaflet CSS & JS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
         body {
-            background-color: #020617;
+            background-color: #070a12;
             color: #f1f5f9;
             font-family: 'Inter', sans-serif;
             overflow-x: hidden;
@@ -67,1315 +59,1335 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* High-Contrast Tactical Scrollbars */
+        /* Tactical Scrollbars */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 5px;
+            height: 5px;
         }
-
         ::-webkit-scrollbar-track {
-            background: #0b1120;
+            background: #0d131f;
         }
-
         ::-webkit-scrollbar-thumb {
-            background: rgba(0, 229, 255, 0.35);
+            background: rgba(0, 229, 255, 0.25);
             border-radius: 3px;
         }
-
         ::-webkit-scrollbar-thumb:hover {
             background: #00e5ff;
         }
 
-        /* Aerospace HUD Borders */
-        .hud-border {
-            border: 1px solid rgba(0, 229, 255, 0.28);
-            box-shadow: 0 4px 18px rgba(0, 0, 0, 0.6), inset 0 0 12px rgba(0, 229, 255, 0.03);
+        /* Aerospace HUD Panels */
+        .hud-card {
+            background: rgba(15, 22, 34, 0.94);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(12px);
+        }
+        .hud-card:hover {
+            border-color: rgba(0, 229, 255, 0.22);
+        }
+        .hud-border-orange {
+            border-color: rgba(240, 118, 50, 0.35) !important;
         }
 
-        .hud-border-alert {
-            border: 1px solid rgba(239, 68, 68, 0.6) !important;
-            box-shadow: 0 0 25px rgba(239, 68, 68, 0.3) !important;
+        /* Status Glow Effects */
+        .glow-orange {
+            box-shadow: 0 0 16px rgba(240, 118, 50, 0.45);
+        }
+        .glow-emerald {
+            box-shadow: 0 0 14px rgba(16, 185, 129, 0.4);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 14px rgba(0, 229, 255, 0.4);
         }
 
-        /* Map Tile Tactical Dark Shader */
-        .tactical-map-layer .leaflet-tile-pane {
-            filter: invert(100%) hue-rotate(180deg) brightness(85%) contrast(120%);
-        }
-
-        /* Tactical Zoom Buttons */
-        .tactical-zoom-btn {
-            background: rgba(15, 23, 42, 0.95) !important;
-            color: #00e5ff !important;
-            border: 1px solid rgba(0, 229, 255, 0.5) !important;
-            font-weight: 800 !important;
-            font-size: 18px !important;
-            width: 34px !important;
-            height: 34px !important;
-            line-height: 32px !important;
-            text-align: center !important;
-            border-radius: 6px !important;
-            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.7) !important;
-            cursor: pointer;
-            transition: all 0.2s ease !important;
-            outline: none;
-        }
-
-        .tactical-zoom-btn:hover {
-            background: #00e5ff !important;
-            color: #000000 !important;
-            box-shadow: 0 0 16px rgba(0, 229, 255, 0.9) !important;
-        }
-
-        /* In-Map Replay Back Button (Bottom Right) */
-        .map-replay-btn {
-            background: rgba(8, 145, 178, 0.25) !important;
-            color: #38bdf8 !important;
-            border: 1.5px solid #00e5ff !important;
-            font-weight: 800 !important;
-            font-size: 12px !important;
-            padding: 7px 14px !important;
-            border-radius: 6px !important;
-            box-shadow: 0 4px 18px rgba(0, 229, 255, 0.35) !important;
-            cursor: pointer;
-            backdrop-filter: blur(8px);
-            transition: all 0.2s ease !important;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-family: 'JetBrains Mono', monospace;
-            letter-spacing: 0.5px;
-            white-space: nowrap;
-        }
-
-        .map-replay-btn:hover {
-            background: #00e5ff !important;
-            color: #020617 !important;
-            box-shadow: 0 0 20px rgba(0, 229, 255, 0.8) !important;
-            transform: translateY(-1px);
-        }
-
-        /* Radar Beacon Animation */
+        /* Pulsing indicator */
         @keyframes radar-pulse {
-            0% {
-                transform: scale(0.6);
-                opacity: 0.9;
-            }
-
-            100% {
-                transform: scale(2.2);
-                opacity: 0;
-            }
+            0% { transform: scale(0.6); opacity: 0.9; }
+            100% { transform: scale(2.0); opacity: 0; }
         }
-
-        .radar-beacon {
+        .pulse-beacon {
             animation: radar-pulse 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
         }
 
-        /* Weather Pulse Animations */
-        @keyframes rain-pulse {
-            0% {
-                opacity: 0.3;
-            }
-
-            50% {
-                opacity: 0.7;
-            }
-
-            100% {
-                opacity: 0.3;
-            }
+        /* Interactive toggle switch */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 22px;
+            background: #1e293b;
+            border-radius: 11px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .toggle-switch.active {
+            background: #f07632;
+            border-color: #f07632;
+            box-shadow: 0 0 10px rgba(240, 118, 50, 0.5);
+        }
+        .toggle-knob {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #ffffff;
+            transition: all 0.25s ease;
+        }
+        .toggle-switch.active .toggle-knob {
+            transform: translateX(22px);
         }
 
-        .weather-rain-cell {
-            animation: rain-pulse 3s ease-in-out infinite;
+        /* Waypoint timeline connector */
+        .corridor-track {
+            position: relative;
         }
-
-        .custom-drone-icon {
-            background: transparent !important;
-            border: none !important;
+        .corridor-track::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            right: 5%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-50%);
+            z-index: 1;
         }
-
-        .drone-marker-container {
-            width: 26px;
-            height: 26px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transform-origin: center center;
-            will-change: transform;
+        .corridor-track-progress {
+            position: absolute;
+            top: 50%;
+            left: 5%;
+            height: 2px;
+            background: linear-gradient(90deg, #10b981, #f07632);
+            transform: translateY(-50%);
+            z-index: 2;
+            transition: width 0.5s ease;
         }
     </style>
 </head>
 
 <body class="h-screen w-screen flex flex-col bg-slate-950 text-slate-100 overflow-hidden text-sm">
 
-    <!-- TOP AVIONICS C2 STATUS BAR & MASTER CONTROLS -->
-    <header
-        class="h-14 bg-slate-900 border-b border-slate-800 flex items-center justify-between px-4 z-50 shrink-0 select-none">
-
-        <div class="flex items-center space-x-3">
-            <div
-                class="w-9 h-9 rounded bg-cyan-500/15 border border-cyan-400/50 flex items-center justify-center text-cyan-300">
-                <i data-lucide="crosshair" class="w-5 h-5"></i>
-            </div>
-            <div>
-                <div class="flex items-center space-x-2">
-                    <span class="font-extrabold tracking-wider text-base text-white font-mono">AERO-AI COMMAND</span>
-                    <span
-                        class="px-2 py-0.5 rounded text-xs font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 uppercase font-mono">v4.8-PROD</span>
-                    <span
-                        class="px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/50 flex items-center gap-1.5 font-mono">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> SITL ACTIVE
-                    </span>
+    <!-- ======================================================== -->
+    <!-- TOP AVIONICS C2 STATUS BAR (IMAGE 1 HEADER REPLICA)      -->
+    <!-- ======================================================== -->
+    <header class="h-14 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between px-4 z-50 shrink-0 select-none">
+        
+        <!-- Left: Aerospace Logo & Mission Flight Info -->
+        <div class="flex items-center space-x-4">
+            <!-- DF Hexagonal Brandmark -->
+            <div class="flex items-center space-x-2">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-orange-500/20 to-orange-700/10 border border-orange-500/40 flex items-center justify-center text-orange-400 font-extrabold font-mono text-base tracking-tighter shadow-lg shadow-orange-500/10">
+                    DF
                 </div>
-                <div class="text-xs font-mono text-slate-300 tracking-tight font-medium">UTM SECTOR: SINGAPORE AIRSPACE
-                    (WSJC FIR) // RAFT CONSENSUS: NODE-01 [LEADER]</div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-xs font-mono text-slate-400 font-semibold">MISSION</span>
+                        <span class="text-xs font-mono font-bold text-white tracking-wide">THEMISTO-CAB</span>
+                        <span class="text-slate-600">|</span>
+                        <span class="text-xs font-mono text-slate-400 font-semibold">AIRCRAFT</span>
+                        <span id="hdr-aircraft" class="text-xs font-mono font-bold text-cyan-300">UAV-ALPHA-01</span>
+                    </div>
+                    <div class="flex items-center space-x-3 text-[11px] font-mono mt-0.5">
+                        <span class="text-slate-400">MISSION: <strong id="hdr-mission-state" class="text-emerald-400">● ACTIVE</strong></span>
+                        <span class="text-slate-600">•</span>
+                        <span class="text-slate-400">PHASE: <strong id="hdr-phase" class="text-orange-400">EN ROUTE</strong></span>
+                        <span class="text-slate-600">•</span>
+                        <span class="text-slate-400">AUTOPILOT: <strong id="hdr-autopilot" class="text-emerald-400">ACTIVE</strong></span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="hidden lg:flex items-center space-x-3 font-mono text-xs">
-            <div class="bg-slate-950 border border-slate-750 px-3 py-1.5 rounded flex items-center space-x-2">
-                <i data-lucide="cloud-rain" class="w-4 h-4 text-amber-400"></i>
-                <span class="text-slate-300">WEATHER RADAR:</span>
-                <span id="header-weather-alert" class="text-amber-300 font-bold">1 ACTIVE CELL</span>
+        <!-- Center: Mission Time & Flight Elapsed Clock -->
+        <div class="hidden lg:flex items-center space-x-5 font-mono text-xs">
+            <div class="bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center space-x-2">
+                <i data-lucide="timer" class="w-4 h-4 text-orange-400"></i>
+                <span class="text-slate-400">MISSION TIME:</span>
+                <span id="mission-clock" class="text-white font-bold">00:42:25</span>
             </div>
 
-            <div class="bg-slate-950 border border-slate-750 px-3 py-1.5 rounded flex items-center space-x-2">
-                <i data-lucide="radio" class="w-4 h-4 text-cyan-400"></i>
-                <span class="text-slate-300">C2 DDS RTT:</span>
-                <span id="c2-rtt" class="text-cyan-300 font-bold">14.2 ms</span>
+            <div class="bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center space-x-2">
+                <i data-lucide="plane-takeoff" class="w-4 h-4 text-cyan-400"></i>
+                <span class="text-slate-400">FLIGHT TIME:</span>
+                <span id="flight-clock" class="text-cyan-300 font-bold">00:23:16</span>
             </div>
 
-            <div class="bg-slate-950 border border-slate-750 px-3 py-1.5 rounded flex items-center space-x-2">
-                <i data-lucide="satellite" class="w-4 h-4 text-emerald-400"></i>
-                <span class="text-slate-300">GNSS:</span>
-                <span class="text-emerald-300 font-bold">RTK FIXED (21 SAT)</span>
+            <div class="bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center space-x-2">
+                <i data-lucide="radio" class="w-4 h-4 text-emerald-400"></i>
+                <span class="text-slate-400">C2 DDS RTT:</span>
+                <span id="c2-rtt" class="text-emerald-300 font-bold">14.2 ms</span>
             </div>
 
-            <div
-                class="bg-slate-950 border border-slate-750 px-3 py-1.5 rounded flex items-center space-x-2 text-slate-200">
+            <div class="bg-slate-950/80 border border-slate-800 px-3 py-1.5 rounded-lg flex items-center space-x-2 text-slate-300">
                 <i data-lucide="clock" class="w-4 h-4 text-slate-400"></i>
                 <span id="utc-clock" class="font-bold">00:00:00 UTC</span>
             </div>
         </div>
 
-        <!-- Master Operations Bar -->
+        <!-- Right: Master Operations Bar -->
         <div class="flex items-center space-x-2">
-            <button onclick="replayNormalMissions()"
-                class="px-3.5 py-1.5 rounded bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-200 border border-cyan-400/60 flex items-center space-x-1.5 text-xs font-bold transition">
-                <i data-lucide="rotate-ccw" class="w-4 h-4 text-cyan-300"></i>
-                <span>REPLAY BACK</span>
+            <button onclick="reoptimizeEntireSwarm()" class="px-3 py-1.5 rounded-lg bg-orange-600/20 hover:bg-orange-600/30 text-orange-300 border border-orange-500/50 flex items-center space-x-1.5 text-xs font-bold transition">
+                <i data-lucide="zap" class="w-3.5 h-3.5 text-orange-400"></i>
+                <span>RE-OPTIMIZE</span>
             </button>
 
-            <button onclick="reoptimizeEntireSwarm()"
-                class="px-3.5 py-1.5 rounded bg-violet-600/30 hover:bg-violet-600/50 text-violet-200 border border-violet-400/60 flex items-center space-x-1.5 text-xs font-extrabold transition">
-                <i data-lucide="zap" class="w-4 h-4 text-violet-300"></i>
-                <span>SWARM RE-OPTIMIZE</span>
+            <button onclick="replayNormalMissions()" class="px-3 py-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600/30 text-cyan-300 border border-cyan-400/50 flex items-center space-x-1.5 text-xs font-bold transition">
+                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 text-cyan-300"></i>
+                <span>REPLAY</span>
             </button>
 
-            <button id="toggle-geofence-btn" onclick="toggleGeofenceShield()"
-                class="px-3.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 flex items-center space-x-1.5 text-xs font-bold transition">
-                <i data-lucide="shield" class="w-4 h-4 text-cyan-400"></i>
-                <span>GEOFENCE ENFORCE</span>
-            </button>
-
-            <button onclick="triggerGlobalRTL()"
-                class="px-3.5 py-1.5 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/60 flex items-center space-x-1.5 text-xs font-bold transition">
-                <i data-lucide="home" class="w-4 h-4"></i>
+            <button onclick="triggerGlobalRTL()" class="px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-400/50 flex items-center space-x-1.5 text-xs font-bold transition">
+                <i data-lucide="home" class="w-3.5 h-3.5"></i>
                 <span>SWARM RTL</span>
             </button>
 
-            <button onclick="triggerGlobalEStop()"
-                class="px-4 py-1.5 rounded bg-rose-600 hover:bg-rose-500 text-white font-extrabold tracking-wider text-xs flex items-center space-x-1.5 shadow-lg shadow-rose-900/50 border border-rose-400 transition animate-pulse">
-                <i data-lucide="octagon-alert" class="w-4 h-4"></i>
+            <button onclick="triggerGlobalEStop()" class="px-3.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-extrabold text-xs flex items-center space-x-1.5 border border-rose-400 transition shadow-lg shadow-rose-900/40">
+                <i data-lucide="octagon-alert" class="w-3.5 h-3.5"></i>
                 <span>E-STOP</span>
             </button>
         </div>
     </header>
 
-    <!-- MAIN MULTI-PANE VIEWPORT -->
-    <main class="flex-1 grid grid-cols-12 gap-2 p-2.5 min-h-0 relative">
+    <!-- ======================================================== -->
+    <!-- MAIN MULTI-PANE GROUND STATION VIEWPORT                   -->
+    <!-- ======================================================== -->
+    <main class="flex-1 grid grid-cols-12 gap-2.5 p-3 min-h-0 relative overflow-hidden">
 
-        <!-- LEFT COLUMN (3/12) -->
-        <aside class="col-span-12 lg:col-span-3 flex flex-col gap-2 min-h-0 overflow-y-auto pr-0.5">
+        <!-- ==================================================== -->
+        <!-- LEFT COLUMN: FLEET LIST, POWERPLANT & PFD (3/12)     -->
+        <!-- ==================================================== -->
+        <aside class="col-span-12 lg:col-span-3 flex flex-col gap-2.5 min-h-0 overflow-y-auto pr-1">
 
-            <!-- Synthetic Vision HUD / PFD -->
-            <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col shrink-0 hud-border">
-                <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
-                    <div class="flex items-center space-x-2 font-mono text-cyan-300 font-bold text-xs">
+            <!-- 1. FLEET LIST (IMAGE 1 REPLICA) -->
+            <div class="hud-card p-3 flex flex-col shrink-0">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800">
+                    <div class="flex items-center space-x-2 font-mono text-xs font-bold text-slate-200">
+                        <i data-lucide="layers" class="w-4 h-4 text-cyan-400"></i>
+                        <span>FLEET LIST</span>
+                    </div>
+                    <span class="text-[11px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700 font-semibold">16 ASSETS</span>
+                </div>
+
+                <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1 font-mono text-xs" id="fleet-list-container">
+                    <!-- Dynamic Fleet List Items Inserted by JS -->
+                </div>
+            </div>
+
+            <!-- 2. POWERPLANT & PROPULSION (IMAGE 1 REPLICA) -->
+            <div class="hud-card p-3 flex flex-col shrink-0">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800">
+                    <div class="flex items-center space-x-2 font-mono text-xs font-bold text-orange-400">
+                        <i data-lucide="activity" class="w-4 h-4"></i>
+                        <span>POWERPLANT & PROPULSION</span>
+                    </div>
+                    <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-300 border border-orange-500/30 font-bold">120 kHz ZCS</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 font-mono text-xs">
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-medium">Power</span>
+                        <span id="power-val" class="text-sm font-bold text-white">1.169 <span class="text-xs text-slate-400 font-normal">kW</span></span>
+                    </div>
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-medium">Fuel / Batt Remaining</span>
+                        <span id="fuel-val" class="text-sm font-bold text-emerald-400">0.552 <span class="text-xs text-slate-400 font-normal">kW (89%)</span></span>
+                    </div>
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-medium">Fuel Flow / Current</span>
+                        <span id="current-val" class="text-sm font-bold text-cyan-300">13.8 <span class="text-xs text-slate-400 font-normal">A</span></span>
+                    </div>
+                    <div class="bg-slate-950/80 p-2 rounded-lg border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block font-medium">Fuel Pressure / ΔV</span>
+                        <span id="pressure-val" class="text-sm font-bold text-amber-300">138 <span class="text-xs text-slate-400 font-normal">kPa</span></span>
+                    </div>
+                </div>
+
+                <!-- RPM Large Gauge -->
+                <div class="mt-2.5 bg-slate-950/90 rounded-lg p-2.5 border border-slate-800 flex items-center justify-between">
+                    <div>
+                        <div class="text-[10px] font-mono text-slate-400 uppercase tracking-wider">PROPULSION ROTOR SPEED</div>
+                        <div class="flex items-baseline space-x-1.5 mt-0.5">
+                            <span id="rpm-val" class="text-2xl font-bold font-mono text-orange-400 tracking-tight">8,636</span>
+                            <span class="text-xs font-mono text-slate-400 font-semibold">RPM</span>
+                        </div>
+                    </div>
+                    <div class="w-24 flex flex-col gap-1">
+                        <div class="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                            <div id="rpm-bar" class="h-full bg-gradient-to-r from-orange-500 to-amber-400 rounded-full transition-all duration-300" style="width: 76%;"></div>
+                        </div>
+                        <div class="flex justify-between text-[9px] font-mono text-slate-500">
+                            <span>0</span>
+                            <span>12K</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. LIVE TELEMETRY SPARKLINES (IMAGE 1 REPLICA) -->
+            <div class="hud-card p-3 flex flex-col shrink-0">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800">
+                    <div class="flex items-center space-x-2 font-mono text-xs font-bold text-cyan-300">
                         <i data-lucide="gauge" class="w-4 h-4"></i>
+                        <span>LIVE TELEMETRY</span>
+                    </div>
+                    <span class="text-[10px] font-mono text-slate-400">STREAMING</span>
+                </div>
+
+                <div class="space-y-2 font-mono text-xs">
+                    <!-- Airspeed (IAS) -->
+                    <div class="flex items-center justify-between bg-slate-950/70 p-1.5 rounded-lg border border-slate-800">
+                        <div class="w-28">
+                            <span class="text-[10px] text-slate-400 block">Airspeed (IAS)</span>
+                            <span id="telemetry-ias" class="text-xs font-bold text-white">68.5 km/h</span>
+                        </div>
+                        <canvas id="spark-ias" width="110" height="26" class="rounded"></canvas>
+                    </div>
+
+                    <!-- Altitude (MSL) -->
+                    <div class="flex items-center justify-between bg-slate-950/70 p-1.5 rounded-lg border border-slate-800">
+                        <div class="w-28">
+                            <span class="text-[10px] text-slate-400 block">Altitude (MSL)</span>
+                            <span id="telemetry-alt" class="text-xs font-bold text-cyan-300">420 m</span>
+                        </div>
+                        <canvas id="spark-alt" width="110" height="26" class="rounded"></canvas>
+                    </div>
+
+                    <!-- Temp (EGT) -->
+                    <div class="flex items-center justify-between bg-slate-950/70 p-1.5 rounded-lg border border-slate-800">
+                        <div class="w-28">
+                            <span class="text-[10px] text-slate-400 block">Temp (EGT)</span>
+                            <span id="telemetry-temp" class="text-xs font-bold text-orange-400">114 °C</span>
+                        </div>
+                        <canvas id="spark-temp" width="110" height="26" class="rounded"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. SYNTHETIC VISION HUD / PFD -->
+            <div class="hud-card p-3 flex flex-col flex-1 min-h-[180px]">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800">
+                    <div class="flex items-center space-x-2 font-mono text-cyan-300 font-bold text-xs">
+                        <i data-lucide="crosshair" class="w-4 h-4"></i>
                         <span>SYNTHETIC VISION HUD // PFD</span>
                     </div>
-                    <span id="pfd-uav-id"
-                        class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 font-bold">UAV-ALPHA-01</span>
+                    <span id="pfd-uav-id" class="text-xs font-mono px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-400/30 font-bold">UAV-ALPHA-01</span>
                 </div>
 
-                <div
-                    class="relative w-full h-44 bg-slate-950 rounded border border-slate-800 overflow-hidden flex items-center justify-center">
-                    <canvas id="pfd-canvas" width="320" height="180" class="w-full h-full"></canvas>
+                <div class="relative w-full flex-1 bg-slate-950 rounded-lg border border-slate-800 overflow-hidden flex items-center justify-center min-h-[140px]">
+                    <canvas id="pfd-canvas" width="320" height="170" class="w-full h-full"></canvas>
 
-                    <div
-                        class="absolute top-2 left-2 font-mono bg-slate-950/90 px-2 py-1 rounded border border-slate-750 text-xs text-cyan-300 font-semibold">
-                        IAS: <span id="pfd-airspeed" class="text-white font-extrabold text-sm">18.2</span> m/s
+                    <div class="absolute top-2 left-2 font-mono bg-slate-950/90 px-2 py-0.5 rounded text-[11px] text-cyan-300 font-semibold border border-slate-800">
+                        IAS: <span id="pfd-airspeed" class="text-white font-bold">18.2</span> m/s
                     </div>
-                    <div
-                        class="absolute top-2 right-2 font-mono bg-slate-950/90 px-2 py-1 rounded border border-slate-750 text-xs text-emerald-300 font-semibold">
-                        AGL: <span id="pfd-alt" class="text-white font-extrabold text-sm">48.5</span> m
+                    <div class="absolute top-2 right-2 font-mono bg-slate-950/90 px-2 py-0.5 rounded text-[11px] text-emerald-300 font-semibold border border-slate-800">
+                        AGL: <span id="pfd-alt" class="text-white font-bold">48.5</span> m
                     </div>
-                    <div
-                        class="absolute bottom-2 left-2 font-mono bg-slate-950/90 px-2 py-1 rounded border border-slate-750 text-xs text-slate-200 font-semibold">
-                        HDG: <span id="pfd-heading" class="text-white font-extrabold text-sm">042°</span>
+                    <div class="absolute bottom-2 left-2 font-mono bg-slate-950/90 px-2 py-0.5 rounded text-[11px] text-slate-300 font-semibold border border-slate-800">
+                        HDG: <span id="pfd-heading" class="text-white font-bold">042°</span>
                     </div>
-                    <div
-                        class="absolute bottom-2 right-2 font-mono bg-slate-950/90 px-2 py-1 rounded border border-slate-750 text-xs text-violet-300 font-semibold">
-                        VSI: <span id="pfd-vsi" class="text-white font-extrabold text-sm">+0.4</span> m/s
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 mt-2 font-mono text-xs text-center">
-                    <div class="bg-slate-950 p-1.5 rounded border border-slate-800">
-                        <span class="text-slate-400 block text-[11px] font-medium">PITCH</span>
-                        <span id="pfd-pitch-val" class="text-cyan-300 font-bold text-sm">+2.4°</span>
-                    </div>
-                    <div class="bg-slate-950 p-1.5 rounded border border-slate-800">
-                        <span class="text-slate-400 block text-[11px] font-medium">ROLL</span>
-                        <span id="pfd-roll-val" class="text-cyan-300 font-bold text-sm">-1.2°</span>
-                    </div>
-                    <div class="bg-slate-950 p-1.5 rounded border border-slate-800">
-                        <span class="text-slate-400 block text-[11px] font-medium">DOPPLER</span>
-                        <span class="text-emerald-400 font-bold text-xs">LOCK (0.01)</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- DroneCAN BMS & Propulsion -->
-            <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col shrink-0 hud-border">
-                <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
-                    <div class="flex items-center space-x-2 font-mono text-emerald-400 font-bold text-xs">
-                        <i data-lucide="zap" class="w-4 h-4"></i>
-                        <span>PROPULSION & 6S BMS (EIS)</span>
-                    </div>
-                    <span class="text-xs font-mono text-slate-300 font-semibold">120 kHz ZCS</span>
-                </div>
-
-                <div class="grid grid-cols-4 gap-1.5 mb-2.5 font-mono text-center">
-                    <div class="bg-slate-950 p-1.5 rounded border border-slate-800">
-                        <div class="text-[11px] text-slate-400 font-medium">VOLTS</div>
-                        <div class="text-xs font-bold text-cyan-300" id="bms-volts">24.84 V</div>
-                    </div>
-                    <div class="bg-slate-950 p-1.5 rounded border border-slate-800">
-                        <div class="text-[11px] text-slate-400 font-medium">CURRENT</div>
-                        <div class="text-xs font-bold text-amber-300" id="bms-amps">28.40 A</div>
-                    </div>
-                    <div class="bg-slate-950 p-1.5 rounded border border-slate-800">
-                        <div class="text-[11px] text-slate-400 font-medium">SOC %</div>
-                        <div class="text-xs font-bold text-emerald-300" id="bms-soc">86.2 %</div>
-                    </div>
-                    <div class="bg-slate-950 p-1.5 rounded border border-slate-800">
-                        <div class="text-[11px] text-slate-400 font-medium">RUL</div>
-                        <div class="text-xs font-bold text-violet-300">94.8 %</div>
-                    </div>
-                </div>
-
-                <div class="mb-2">
-                    <div class="flex justify-between text-xs font-mono text-slate-300 mb-1 font-semibold">
-                        <span>6S CELL BALANCE</span>
-                        <span class="text-emerald-400">ΔV: 4.2 mV (OK)</span>
-                    </div>
-                    <div class="grid grid-cols-6 gap-1" id="cell-matrix"></div>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 mt-1 font-mono text-xs">
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800 flex justify-between items-center">
-                        <span class="text-slate-300 font-medium">ESC TEMP:</span>
-                        <span id="esc-temp" class="text-emerald-400 font-bold">36.4 °C</span>
-                    </div>
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800 flex justify-between items-center">
-                        <span class="text-slate-300 font-medium">MOTOR:</span>
-                        <span id="motor-temp" class="text-emerald-400 font-bold">41.8 °C</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Meteorological Station HUD -->
-            <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col flex-1 hud-border">
-                <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
-                    <div class="flex items-center space-x-2 font-mono text-amber-300 font-bold text-xs">
-                        <i data-lucide="cloud-lightning" class="w-4 h-4"></i>
-                        <span>METEOROLOGICAL NOWCAST (NEA RADAR)</span>
-                    </div>
-                    <span class="text-xs font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">LIVE
-                        METAR</span>
-                </div>
-
-                <div class="space-y-2.5 font-mono text-xs">
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-white font-semibold">🌧️ RAIN CELLS (WEST / JURONG)</span>
-                            <span class="text-rose-400 font-bold">28 mm/h (HEAVY)</span>
-                        </div>
-                        <div class="text-[11px] text-slate-400">Convective cells moving NE at 14 km/h</div>
-                    </div>
-
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-white font-semibold">💨 WIND SHEAR (MARINA CORRIDOR)</span>
-                            <span class="text-amber-400 font-bold">36 km/h GUSTS</span>
-                        </div>
-                        <div class="text-[11px] text-slate-400">Crosswind factor 1.8 // GNN compensation active</div>
-                    </div>
-
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800">
-                        <div class="flex justify-between items-center mb-1">
-                            <span class="text-white font-semibold">☀️ NOMINAL CORRIDORS (CENTRAL/EAST)</span>
-                            <span class="text-emerald-400 font-bold">CLEAR (29.4°C)</span>
-                        </div>
-                        <div class="text-[11px] text-slate-400">Air density: 1.184 kg/m³ // SMT Verified</div>
+                    <div class="absolute bottom-2 right-2 font-mono bg-slate-950/90 px-2 py-0.5 rounded text-[11px] text-orange-400 font-semibold border border-slate-800">
+                        PITCH: <span id="pfd-pitch" class="text-white font-bold">+2.4°</span>
                     </div>
                 </div>
             </div>
 
         </aside>
 
-        <!-- CENTER COLUMN (6/12) -->
-        <section class="col-span-12 lg:col-span-6 flex flex-col gap-2 min-h-0">
+        <!-- ==================================================== -->
+        <!-- CENTER COLUMN: METEO GROUND STATION & TIMELINE (6/12)-->
+        <!-- ==================================================== -->
+        <section class="col-span-12 lg:col-span-6 flex flex-col gap-2.5 min-h-0 overflow-y-auto">
 
-            <!-- Map Container -->
-            <div
-                class="bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col flex-1 relative hud-border overflow-hidden">
+            <!-- 1. METEO GROUND STATION (IMAGE 2 EXACT REPLICA) -->
+            <div class="hud-card p-4 flex flex-col shrink-0 border-slate-700/80">
 
-                <div
-                    class="flex flex-wrap items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-800 z-10 font-mono text-xs">
-                    <div class="flex items-center space-x-2">
-                        <div class="flex items-center space-x-1.5 text-cyan-300 font-bold text-sm">
-                            <i data-lucide="map-pin" class="w-4 h-4"></i>
-                            <span>UTM TACTICAL RADAR // SINGAPORE INLAND</span>
+                <!-- Header: Dish Icon + Title + Online Badge -->
+                <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                            <i data-lucide="satellite" class="w-5 h-5"></i>
                         </div>
-                        <span class="text-slate-600">|</span>
-                        <span id="active-airspace-tag" class="text-emerald-400 font-bold">0 AIRSPACE BREACHES</span>
+                        <div>
+                            <h2 class="text-base font-extrabold text-white tracking-wide font-sans">METEO GROUND STATION</h2>
+                            <p class="text-[11px] text-slate-400 font-mono">WEATHER & LAUNCH SUPPORT NODE</p>
+                        </div>
                     </div>
-
-                    <!-- Live Weather Layer Toggles -->
-                    <div class="flex items-center space-x-2">
-                        <button onclick="toggleWeatherLayer('rain')" id="btn-rain-layer"
-                            class="px-2.5 py-1.5 rounded bg-rose-500/20 text-rose-300 border border-rose-400/60 text-xs font-bold flex items-center gap-1.5 transition">
-                            <i data-lucide="cloud-rain" class="w-3.5 h-3.5"></i> RAIN RADAR
-                        </button>
-                        <button onclick="toggleWeatherLayer('wind')" id="btn-wind-layer"
-                            class="px-2.5 py-1.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/60 text-xs font-bold flex items-center gap-1.5 transition">
-                            <i data-lucide="wind" class="w-3.5 h-3.5"></i> WIND VECTOR
-                        </button>
-                        <button onclick="toggleWeatherLayer('clear')" id="btn-clear-layer"
-                            class="px-2.5 py-1.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-400/60 text-xs font-bold flex items-center gap-1.5 transition">
-                            <i data-lucide="sun" class="w-3.5 h-3.5"></i> CLEAR ZONES
-                        </button>
-                        <button onclick="centerMapSingapore()"
-                            class="px-2.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 text-xs font-bold transition">
-                            CENTER
-                        </button>
+                    <div class="flex items-center space-x-1.5 px-3 py-1 rounded-lg bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 font-mono text-xs font-bold">
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <span>ONLINE</span>
                     </div>
                 </div>
 
-                <div
-                    class="relative w-full flex-1 rounded bg-slate-950 overflow-hidden border border-slate-800 tactical-map-layer">
-                    <div id="tactical-map" class="w-full h-full"></div>
-
-                    <div
-                        class="absolute top-3 left-3 z-[1000] bg-slate-950/95 backdrop-blur border border-slate-700 p-2.5 rounded text-xs font-mono pointer-events-none">
-                        <div class="text-cyan-300 font-bold flex items-center gap-2">
-                            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 radar-beacon"></span>
-                            3D GEOCAGING & WEATHER NOWCAST: ACTIVE
-                        </div>
-                        <div class="text-slate-300 mt-1 font-medium">CEILING: 120m AGL // NFZ BUFFER: 500m</div>
-                        <div class="text-slate-300 font-medium">Z3 FORMAL INVARIANTS: VERIFIED (0 BREACHES)</div>
-                    </div>
-
-                    <!-- Map Floating Controls Group (Bottom Right) -->
-                    <div class="absolute bottom-4 right-4 z-[1000] flex items-center gap-2">
-                        <!-- Bottom-Right Replay Back Button -->
-                        <button onclick="replayNormalMissions()" class="map-replay-btn"
-                            title="Restart all UAVs into normal patrol routes avoiding all NFZs">
-                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                            <span>REPLAY BACK</span>
-                        </button>
-
-                        <!-- Smooth Zoom Buttons -->
-                        <div class="flex flex-col gap-1.5">
-                            <button onclick="smoothZoomIn()" class="tactical-zoom-btn" title="Smooth Zoom In">+</button>
-                            <button onclick="smoothZoomOut()" class="tactical-zoom-btn"
-                                title="Smooth Zoom Out">−</button>
+                <!-- Station Meta Strip (Station ID | Location | Linked Drones | Last Sync) -->
+                <div class="grid grid-cols-4 gap-2 my-3 p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 font-mono text-xs">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="file-text" class="w-4 h-4 text-slate-500"></i>
+                        <div>
+                            <span class="text-[9px] text-slate-400 uppercase block">STATION ID</span>
+                            <span class="font-bold text-white">MD-01</span>
                         </div>
                     </div>
 
-                    <!-- Selected Drone Action Float-Box -->
-                    <div id="drone-quick-actions"
-                        class="hidden absolute bottom-3 left-3 z-[1000] bg-slate-900/95 backdrop-blur border border-cyan-400 p-3 rounded text-xs font-mono shadow-2xl">
-                        <div class="flex items-center justify-between gap-6 mb-2.5 pb-1.5 border-b border-slate-800">
-                            <span id="selected-drone-title"
-                                class="font-extrabold text-cyan-300 text-sm">UAV-ALPHA-01</span>
-                            <span id="selected-drone-soc" class="text-emerald-300 font-bold text-sm">89% SOC</span>
+                    <div class="flex items-center space-x-2 border-l border-slate-800 pl-2">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-slate-500"></i>
+                        <div>
+                            <span class="text-[9px] text-slate-400 uppercase block">LOCATION</span>
+                            <span class="font-bold text-white">SECTOR B</span>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button onclick="commandSelectedDrone('HOLD')"
-                                class="px-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-white border border-slate-600 text-xs font-bold">HOVER</button>
-                            <button onclick="commandSelectedDrone('REPLAN')"
-                                class="px-3 py-1.5 rounded bg-violet-600 text-white border border-violet-400 hover:bg-violet-500 text-xs font-extrabold shadow-lg shadow-violet-900/50">⚡
-                                RE-OPTIMIZE & RETURN</button>
-                            <button onclick="commandSelectedDrone('RESUME')"
-                                class="px-3 py-1.5 rounded bg-cyan-600/30 text-cyan-200 border border-cyan-400 hover:bg-cyan-600/50 text-xs font-bold">🔄
-                                REPLAY BACK</button>
-                            <button onclick="commandSelectedDrone('RTL')"
-                                class="px-3 py-1.5 rounded bg-rose-600 text-white border border-rose-400 hover:bg-rose-500 text-xs font-extrabold">RECALL
-                                RTL</button>
+                    </div>
+
+                    <div class="flex items-center space-x-2 border-l border-slate-800 pl-2">
+                        <i data-lucide="network" class="w-4 h-4 text-slate-500"></i>
+                        <div>
+                            <span class="text-[9px] text-slate-400 uppercase block">LINKED DRONES</span>
+                            <span class="font-bold text-emerald-400">16 ASSETS</span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center space-x-2 border-l border-slate-800 pl-2">
+                        <i data-lucide="clock" class="w-4 h-4 text-slate-500"></i>
+                        <div>
+                            <span class="text-[9px] text-slate-400 uppercase block">LAST SYNC</span>
+                            <span id="meteo-last-sync" class="font-bold text-slate-200">14:02:44</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-4 gap-2 mt-2 pt-2 border-t border-slate-800 font-mono text-xs">
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800 flex justify-between">
-                        <span class="text-slate-400">WEATHER ENGINE:</span>
-                        <span class="text-amber-300 font-bold">ACTIVE NOWCAST</span>
+                <!-- Row 1: Wind Speed Chart & Flight Readiness Gauge -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
+                    
+                    <!-- Wind Speed (kt) Chart Card -->
+                    <div class="bg-slate-950/80 rounded-xl p-3 border border-slate-800 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-1.5">
+                            <div class="flex items-center space-x-2 font-mono text-xs font-bold text-slate-300">
+                                <i data-lucide="wind" class="w-4 h-4 text-orange-400"></i>
+                                <span>WIND SPEED (kt)</span>
+                            </div>
+                            <select id="wind-time-filter" class="bg-slate-900 border border-slate-700 text-slate-300 text-[10px] font-mono rounded px-2 py-1 outline-none">
+                                <option value="60">Last 60 min</option>
+                                <option value="120">Last 2 hr</option>
+                                <option value="1440">Last 24 hr</option>
+                            </select>
+                        </div>
+
+                        <div class="relative h-28 w-full mt-1">
+                            <canvas id="meteo-wind-canvas" width="340" height="110" class="w-full h-full"></canvas>
+                        </div>
                     </div>
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800 flex justify-between">
-                        <span class="text-slate-400">COLLISION RISK:</span>
-                        <span class="text-emerald-300 font-bold">0.00% (APF PASS)</span>
+
+                    <!-- Flight Readiness Arc Gauge Card -->
+                    <div class="bg-slate-950/80 rounded-xl p-3 border border-slate-800 flex flex-col items-center justify-between">
+                        <div class="w-full flex items-center justify-between mb-1">
+                            <div class="flex items-center space-x-2 font-mono text-xs font-bold text-slate-300">
+                                <i data-lucide="gauge" class="w-4 h-4 text-emerald-400"></i>
+                                <span>FLIGHT READINESS</span>
+                            </div>
+                        </div>
+
+                        <!-- Semi-Circular Gauge -->
+                        <div class="relative w-44 h-24 flex items-end justify-center">
+                            <svg class="w-44 h-24 overflow-visible" viewBox="0 0 160 90">
+                                <!-- Background Track -->
+                                <path d="M 20 80 A 60 60 0 0 1 140 80" fill="none" stroke="#1e293b" stroke-width="14" stroke-linecap="round"/>
+                                <!-- Active Gradient Track (92%) -->
+                                <defs>
+                                    <linearGradient id="readinessGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#10b981"/>
+                                        <stop offset="80%" stop-color="#22c55e"/>
+                                        <stop offset="100%" stop-color="#84cc16"/>
+                                    </linearGradient>
+                                </defs>
+                                <path id="readiness-path" d="M 20 80 A 60 60 0 0 1 140 80" fill="none" stroke="url(#readinessGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="188.5" stroke-dashoffset="15"/>
+                            </svg>
+                            <div class="absolute bottom-1 flex flex-col items-center">
+                                <span class="text-2xl font-black font-mono text-white tracking-tight">92<span class="text-lg font-bold">%</span></span>
+                                <span class="text-[10px] font-mono text-emerald-400 font-extrabold tracking-widest uppercase">READY</span>
+                            </div>
+                        </div>
+
+                        <div class="w-full flex justify-between text-[10px] font-mono text-slate-500 px-3">
+                            <span>0%</span>
+                            <span>100%</span>
+                        </div>
                     </div>
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800 flex justify-between">
-                        <span class="text-slate-400">GUST COMPENSATION:</span>
-                        <span class="text-cyan-300 font-bold">ONLINE (LSTM)</span>
+
+                </div>
+
+                <!-- Row 2: Humidity, Temperature & Visibility Sliders -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 mb-3 font-mono">
+                    
+                    <!-- Humidity Card -->
+                    <div class="bg-slate-950/80 rounded-xl p-3 border border-slate-800">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                            <div class="flex items-center space-x-1.5">
+                                <i data-lucide="droplets" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                <span class="text-[11px] font-semibold">HUMIDITY</span>
+                            </div>
+                            <span class="text-sm font-bold text-white font-mono">46 <span class="text-xs text-slate-400">%</span></span>
+                        </div>
+                        <div class="mt-2.5">
+                            <div class="flex justify-between text-[9px] text-slate-500 mb-1">
+                                <span>Min</span>
+                                <span>Max</span>
+                            </div>
+                            <div class="relative h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full" style="width: 46%;"></div>
+                            </div>
+                            <div class="flex justify-between text-[9px] text-slate-500 mt-1">
+                                <span>0%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800 flex justify-between">
-                        <span class="text-slate-400">ACTIVE NFZs:</span>
-                        <span class="text-rose-400 font-bold">3 RESTRICTED</span>
+
+                    <!-- Temperature Card with Histogram -->
+                    <div class="bg-slate-950/80 rounded-xl p-3 border border-slate-800">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                            <div class="flex items-center space-x-1.5">
+                                <i data-lucide="thermometer" class="w-3.5 h-3.5 text-orange-400"></i>
+                                <span class="text-[11px] font-semibold">TEMPERATURE</span>
+                            </div>
+                            <span class="text-sm font-bold text-white font-mono">28 <span class="text-xs text-slate-400">°C</span></span>
+                        </div>
+                        <!-- Mini Temperature Bars -->
+                        <div class="h-10 flex items-end justify-between gap-1.5 pt-1 px-1">
+                            <div class="flex-1 bg-emerald-500/30 rounded-t h-[60%]"></div>
+                            <div class="flex-1 bg-emerald-500/50 rounded-t h-[75%]"></div>
+                            <div class="flex-1 bg-emerald-500/80 rounded-t h-[90%]"></div>
+                            <div class="flex-1 bg-emerald-500/60 rounded-t h-[70%]"></div>
+                            <div class="flex-1 bg-emerald-500/40 rounded-t h-[55%]"></div>
+                        </div>
+                        <div class="flex justify-between text-[8px] text-slate-500 mt-1">
+                            <span>11:00</span>
+                            <span>12:00</span>
+                            <span>13:00</span>
+                            <span>14:00</span>
+                        </div>
                     </div>
+
+                    <!-- Visibility Card -->
+                    <div class="bg-slate-950/80 rounded-xl p-3 border border-slate-800">
+                        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+                            <div class="flex items-center space-x-1.5">
+                                <i data-lucide="eye" class="w-3.5 h-3.5 text-cyan-400"></i>
+                                <span class="text-[11px] font-semibold">VISIBILITY</span>
+                            </div>
+                            <span class="text-sm font-bold text-white font-mono">21 <span class="text-xs text-slate-400">km</span></span>
+                        </div>
+                        <div class="mt-2.5">
+                            <div class="flex justify-between text-[9px] text-slate-500 mb-1">
+                                <span>Min</span>
+                                <span>Max</span>
+                            </div>
+                            <div class="relative h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                                <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full" style="width: 82%;"></div>
+                            </div>
+                            <div class="flex justify-between text-[9px] text-slate-500 mt-1">
+                                <span>0%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Row 3: Launch Readiness, Data Quality, Safe Launch Window -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 mb-3 font-mono">
+                    <div class="bg-slate-950/80 rounded-xl p-3 border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block uppercase">LAUNCH READINESS</span>
+                        <div class="text-sm font-extrabold text-emerald-400 mt-0.5">READY</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">All systems Go</div>
+                    </div>
+
+                    <div class="bg-slate-950/80 rounded-xl p-3 border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block uppercase">DATA QUALITY</span>
+                        <div class="text-sm font-extrabold text-cyan-300 mt-0.5">98%</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">Excellent (SMT Verified)</div>
+                    </div>
+
+                    <div class="bg-slate-950/80 rounded-xl p-3 border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block uppercase">SAFE LAUNCH WINDOW</span>
+                        <div class="text-sm font-extrabold text-white mt-0.5">42 Minutes</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">Until 15:15 UTC</div>
+                    </div>
+                </div>
+
+                <!-- Row 4: Action Buttons -->
+                <div class="flex items-center gap-2 pt-1 border-t border-slate-800">
+                    <button onclick="addSyslog('Meteo sensor suite detailed telemetry view active.', 'INFO')" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center space-x-1.5 text-xs font-semibold transition">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i>
+                        <span>VIEW DETAILS</span>
+                    </button>
+                    <button onclick="calibrateMeteoSensors()" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center space-x-1.5 text-xs font-semibold transition">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <span>CALIBRATE SENSORS</span>
+                    </button>
+                    <button onclick="runLaunchCheck()" class="flex-1 py-2 rounded-lg bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-400 text-white font-extrabold flex items-center justify-center space-x-1.5 text-xs shadow-lg shadow-orange-600/30 transition">
+                        <i data-lucide="rocket" class="w-3.5 h-3.5"></i>
+                        <span>LAUNCH CHECK</span>
+                    </button>
                 </div>
 
             </div>
 
-            <!-- Swarm Telemetry Grid -->
-            <div class="h-48 bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col shrink-0 hud-border">
-                <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-1.5">
-                    <div class="flex items-center space-x-2 font-mono text-cyan-300 font-bold text-xs">
-                        <i data-lucide="list" class="w-4 h-4"></i>
-                        <span>REAL-TIME MULTI-UAV SWARM & LIVE WEATHER SENSING BUS (16 ASSETS)</span>
+            <!-- 2. MISSION TIMELINE (24hr, 7Day, 30 Days) (IMAGE 1 REPLICA) -->
+            <div class="hud-card p-4 flex flex-col flex-1 shrink-0">
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex items-center space-x-2 font-mono text-xs font-bold text-slate-200">
+                            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+                            <span>MISSION TIMELINE</span>
+                        </div>
+                        <div class="flex items-center space-x-3 text-[11px] font-mono text-slate-400">
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 bg-emerald-400 rounded-sm inline-block"></span> Altitude (m MSL)</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2.5 h-0.5 bg-orange-400 inline-block"></span> Airspeed (km/h)</span>
+                        </div>
                     </div>
-                    <span class="text-xs font-mono text-slate-400 font-medium">AUTO-SYNC 60Hz</span>
+
+                    <!-- Time Range Selector Buttons: 24 H, 7 D, 30 D -->
+                    <div class="flex items-center bg-slate-950 p-1 rounded-lg border border-slate-800 font-mono text-xs">
+                        <button onclick="setTimelineRange('24H')" id="btn-timeline-24h" class="px-3 py-1 rounded bg-orange-500 text-white font-bold transition shadow-sm">24 H</button>
+                        <button onclick="setTimelineRange('7D')" id="btn-timeline-7d" class="px-3 py-1 rounded text-slate-400 hover:text-white font-medium transition">7 D</button>
+                        <button onclick="setTimelineRange('30D')" id="btn-timeline-30d" class="px-3 py-1 rounded text-slate-400 hover:text-white font-medium transition">30 D</button>
+                    </div>
                 </div>
 
-                <div class="flex-1 overflow-y-auto overflow-x-auto">
-                    <table class="w-full text-left font-mono text-xs">
-                        <thead
-                            class="sticky top-0 bg-slate-950 text-slate-300 border-b border-slate-700 z-10 font-bold text-xs">
-                            <tr>
-                                <th class="p-2">CALLSIGN</th>
-                                <th class="p-2">AIRFRAME MODEL</th>
-                                <th class="p-2">STATE</th>
-                                <th class="p-2">ATMOSPHERE / WX</th>
-                                <th class="p-2">ALT</th>
-                                <th class="p-2">SPEED</th>
-                                <th class="p-2">HEADING</th>
-                                <th class="p-2">LiDAR</th>
-                                <th class="p-2">BATTERY</th>
-                                <th class="p-2 text-right">ACTION</th>
-                            </tr>
-                        </thead>
-                        <tbody id="swarm-telemetry-tbody" class="divide-y divide-slate-800 text-slate-200"></tbody>
-                    </table>
+                <!-- High-Performance Canvas Histogram -->
+                <div class="relative w-full h-44 bg-slate-950/80 rounded-xl p-2.5 border border-slate-800">
+                    <canvas id="mission-timeline-canvas" width="600" height="150" class="w-full h-full"></canvas>
                 </div>
+
+                <!-- Navigation Route Progress Ribbon (LAUNCH -> WP1 -> WP2 -> WP3 -> WP4 -> RTB) -->
+                <div class="mt-3 pt-2.5 border-t border-slate-800 font-mono">
+                    <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+                        <span class="font-bold text-slate-300">ROUTE CORRIDOR PROGRESSION</span>
+                        <span class="text-orange-400 font-bold" id="route-stage-text">WP2 EN ROUTE (48.5m AGL)</span>
+                    </div>
+
+                    <div class="corridor-track py-2">
+                        <div id="corridor-progress-fill" class="corridor-track-progress" style="width: 48%;"></div>
+                        <div class="relative z-10 flex justify-between items-center px-2">
+                            <!-- Launch Node -->
+                            <div class="flex flex-col items-center">
+                                <div class="w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-[10px] flex items-center justify-center ring-4 ring-emerald-500/20">L</div>
+                                <span class="text-[9px] text-emerald-400 font-bold mt-1">LAUNCH</span>
+                            </div>
+                            <!-- WP1 -->
+                            <div class="flex flex-col items-center">
+                                <div class="w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-[10px] flex items-center justify-center ring-4 ring-emerald-500/20">1</div>
+                                <span class="text-[9px] text-emerald-400 font-bold mt-1">WP1</span>
+                            </div>
+                            <!-- WP2 (Current Active) -->
+                            <div class="flex flex-col items-center">
+                                <div class="w-6 h-6 rounded-full bg-orange-500 text-white font-extrabold text-[10px] flex items-center justify-center ring-4 ring-orange-500/30 animate-pulse">2</div>
+                                <span class="text-[9px] text-orange-400 font-extrabold mt-1">WP2</span>
+                            </div>
+                            <!-- WP3 -->
+                            <div class="flex flex-col items-center">
+                                <div class="w-6 h-6 rounded-full bg-slate-800 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-700">3</div>
+                                <span class="text-[9px] text-slate-500 font-medium mt-1">WP3</span>
+                            </div>
+                            <!-- WP4 -->
+                            <div class="flex flex-col items-center">
+                                <div class="w-6 h-6 rounded-full bg-slate-800 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-700">4</div>
+                                <span class="text-[9px] text-slate-500 font-medium mt-1">WP4</span>
+                            </div>
+                            <!-- RTB -->
+                            <div class="flex flex-col items-center">
+                                <div class="w-6 h-6 rounded-full bg-slate-800 text-slate-400 font-bold text-[10px] flex items-center justify-center border border-slate-700">R</div>
+                                <span class="text-[9px] text-slate-500 font-medium mt-1">RTB</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
         </section>
 
-        <!-- RIGHT COLUMN (3/12) -->
-        <aside class="col-span-12 lg:col-span-3 flex flex-col gap-2 min-h-0 overflow-y-auto pl-0.5">
+        <!-- ==================================================== -->
+        <!-- RIGHT COLUMN: STATUS, FLIGHT MODE, LAUNCH & RETRIEVAL-->
+        <!-- ==================================================== -->
+        <aside class="col-span-12 lg:col-span-3 flex flex-col gap-2.5 min-h-0 overflow-y-auto pl-1">
 
-            <!-- 1. Neural Energy Surrogate -->
-            <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col shrink-0 hud-border">
-                <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
-                    <div class="flex items-center space-x-2 font-mono text-violet-300 font-bold text-xs">
-                        <i data-lucide="brain-circuit" class="w-4 h-4"></i>
-                        <span>AI ENERGY MLP & ATTENTION VRP</span>
+            <!-- 1. MISSION STATUS (IMAGE 1 REPLICA) -->
+            <div class="hud-card p-3 flex flex-col shrink-0">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800">
+                    <div class="flex items-center space-x-2 font-mono text-xs font-bold text-slate-200">
+                        <i data-lucide="compass" class="w-4 h-4 text-orange-400"></i>
+                        <span>MISSION STATUS</span>
                     </div>
-                    <span id="optimizer-status-tag"
-                        class="text-xs font-mono px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 font-bold">READY</span>
                 </div>
 
-                <div class="w-full h-32 relative">
-                    <canvas id="neuralEnergyChart"></canvas>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2 mt-2 font-mono text-xs">
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800">
-                        <span class="text-slate-400 block text-[11px] font-medium">MLP SURROGATE:</span>
-                        <span id="mlp-consumption-val" class="text-cyan-300 font-bold text-sm">4.18 Wh/km</span>
+                <div class="flex items-center gap-3 py-1">
+                    <!-- Circular Completion Progress Ring -->
+                    <div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+                        <svg class="w-24 h-24 transform -rotate-90" viewBox="0 0 100 100">
+                            <!-- Background Circle -->
+                            <circle cx="50" cy="50" r="40" stroke="#1e293b" stroke-width="8" fill="none"/>
+                            <!-- Active Arc (82%) -->
+                            <circle id="mission-progress-circle" cx="50" cy="50" r="40" stroke="#f07632" stroke-width="8" stroke-linecap="round" fill="none" stroke-dasharray="251.2" stroke-dashoffset="45" style="filter: drop-shadow(0 0 6px rgba(240, 118, 50, 0.6));"/>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center text-center font-mono">
+                            <span id="mission-pct-text" class="text-lg font-black text-white">82%</span>
+                            <span class="text-[9px] text-slate-400 font-bold uppercase tracking-wider">COMPLETE</span>
+                        </div>
                     </div>
-                    <div class="bg-slate-950 p-2 rounded border border-slate-800">
-                        <span class="text-slate-400 block text-[11px] font-medium">WEATHER LSTM:</span>
-                        <span class="text-emerald-300 font-bold text-sm">σ = 0.32 m/s</span>
+
+                    <!-- Status Key-Values -->
+                    <div class="flex-1 font-mono text-xs space-y-1">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400 text-[10px]">State</span>
+                            <span id="status-state-text" class="font-bold text-white">EN ROUTE</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400 text-[10px]">Phase</span>
+                            <span class="font-bold text-orange-400">CRUISE</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400 text-[10px]">ETA (Return)</span>
+                            <span id="status-eta-text" class="font-bold text-slate-200">00:47:59</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400 text-[10px]">Distance to RP</span>
+                            <span id="status-dist-text" class="font-bold text-cyan-300">24.7 km</span>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 2. Dual Payload Vision Feed -->
-            <div class="bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col shrink-0 hud-border">
-                <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
-                    <div class="flex items-center space-x-2 font-mono text-amber-400 font-bold text-xs">
+            <!-- 2. FLIGHT MODE (IMAGE 1 REPLICA) -->
+            <div class="hud-card p-3 flex flex-col shrink-0">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800">
+                    <div class="flex items-center space-x-2 font-mono text-xs font-bold text-slate-200">
+                        <i data-lucide="sliders" class="w-4 h-4 text-emerald-400"></i>
+                        <span>FLIGHT MODE</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between py-1 font-mono text-xs">
+                    <span class="text-slate-400 font-medium">RC Override</span>
+                    <div class="flex items-center space-x-2">
+                        <span id="rc-override-label" class="text-[10px] text-slate-400 font-bold">INACTIVE</span>
+                        <div id="rc-override-toggle" onclick="toggleRcOverride()" class="toggle-switch">
+                            <div class="toggle-knob"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between py-1 border-t border-slate-800/80 font-mono text-xs">
+                    <span class="text-slate-400 font-medium">Control Mode</span>
+                    <span id="control-mode-pill" class="px-2.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/40 font-bold text-xs">AUTO</span>
+                </div>
+
+                <!-- Autopilot Subsystem Indicators (NAV, ALT, SPD, HDG, RTL) -->
+                <div class="grid grid-cols-5 gap-1.5 mt-2 pt-2 border-t border-slate-800 font-mono text-center">
+                    <div class="bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                        <div class="text-[9px] text-slate-400 font-bold">NAV</div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 mx-auto mt-1 glow-emerald"></div>
+                    </div>
+                    <div class="bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                        <div class="text-[9px] text-slate-400 font-bold">ALT</div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 mx-auto mt-1 glow-emerald"></div>
+                    </div>
+                    <div class="bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                        <div class="text-[9px] text-slate-400 font-bold">SPD</div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 mx-auto mt-1 glow-emerald"></div>
+                    </div>
+                    <div class="bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                        <div class="text-[9px] text-slate-400 font-bold">HDG</div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 mx-auto mt-1 glow-emerald"></div>
+                    </div>
+                    <div class="bg-slate-950 p-1.5 rounded-lg border border-slate-800">
+                        <div class="text-[9px] text-slate-400 font-bold">RTL</div>
+                        <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 mx-auto mt-1 glow-emerald"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. LAUNCH & RETRIEVAL (IMAGE 1 REPLICA) -->
+            <div class="hud-card p-3 flex flex-col shrink-0">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800">
+                    <div class="flex items-center space-x-2 font-mono text-xs font-bold text-orange-400">
+                        <i data-lucide="anchor" class="w-4 h-4"></i>
+                        <span>LAUNCH & RETRIEVAL</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="font-mono text-xs space-y-1.5">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-slate-400 text-[10px]">Retrieval Rig:</span>
+                            <span class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold">● ON STATION</span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-[10px] block">Wind Speed</span>
+                            <span id="lr-wind-speed" class="text-sm font-bold text-white">1.4 <span class="text-xs text-slate-400">kt</span></span>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 text-[10px] block">Gust</span>
+                            <span id="lr-wind-gust" class="text-sm font-bold text-orange-400">2.1 <span class="text-xs text-slate-400">kt</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Compass Heading Dial -->
+                    <div class="relative w-24 h-24 shrink-0 flex items-center justify-center">
+                        <svg class="w-24 h-24" viewBox="0 0 100 100">
+                            <!-- Outer Compass Circle -->
+                            <circle cx="50" cy="50" r="44" stroke="#1e293b" stroke-width="2" fill="#0b1120"/>
+                            <!-- Cardinal Points -->
+                            <text x="50" y="16" text-anchor="middle" font-size="8" font-family="JetBrains Mono" font-weight="bold" fill="#f87171">N</text>
+                            <text x="88" y="53" text-anchor="middle" font-size="8" font-family="JetBrains Mono" font-weight="bold" fill="#94a3b8">E</text>
+                            <text x="50" y="90" text-anchor="middle" font-size="8" font-family="JetBrains Mono" font-weight="bold" fill="#94a3b8">S</text>
+                            <text x="12" y="53" text-anchor="middle" font-size="8" font-family="JetBrains Mono" font-weight="bold" fill="#94a3b8">W</text>
+                            <!-- Degree Ticks -->
+                            <circle cx="50" cy="50" r="38" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="2, 6" fill="none"/>
+                            <!-- Rotating Needle -->
+                            <g id="compass-needle" transform="rotate(325 50 50)">
+                                <polygon points="50,20 54,50 50,46 46,50" fill="#f07632" style="filter: drop-shadow(0 0 4px #f07632);"/>
+                                <polygon points="50,80 54,50 50,54 46,50" fill="#64748b"/>
+                                <circle cx="50" cy="50" r="3" fill="#ffffff"/>
+                            </g>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. DUAL VISION PAYLOAD (FLIR THERMAL & VSLAM) -->
+            <div class="hud-card p-3 flex flex-col shrink-0">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800">
+                    <div class="flex items-center space-x-2 font-mono text-xs font-bold text-amber-400">
                         <i data-lucide="video" class="w-4 h-4"></i>
                         <span>VISION PAYLOAD // FLIR & VSLAM</span>
                     </div>
-                    <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-xs font-mono font-bold">REC
-                        ●</span>
+                    <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold">LIVE REC ●</span>
                 </div>
 
                 <div class="grid grid-cols-2 gap-2">
-                    <div
-                        class="relative h-28 bg-slate-950 rounded border border-slate-800 overflow-hidden flex flex-col justify-between p-2">
-                        <canvas id="thermal-canvas" width="160" height="110"
-                            class="absolute inset-0 w-full h-full"></canvas>
-                        <div
-                            class="relative z-10 flex justify-between text-xs font-mono bg-slate-950/80 px-1.5 py-0.5 rounded text-amber-300 font-bold">
+                    <div class="relative h-24 bg-slate-950 rounded-lg border border-slate-800 overflow-hidden flex flex-col justify-between p-1.5">
+                        <canvas id="thermal-canvas" width="160" height="96" class="absolute inset-0 w-full h-full"></canvas>
+                        <div class="relative z-10 flex justify-between text-[10px] font-mono bg-slate-950/80 px-1 py-0.5 rounded text-amber-300 font-bold">
                             <span>FLIR IR</span>
                             <span>34.2°C</span>
                         </div>
-                        <div
-                            class="relative z-10 text-xs font-mono text-emerald-300 font-extrabold text-center bg-slate-950/80 py-0.5 rounded">
+                        <div class="relative z-10 text-[9px] font-mono text-emerald-300 font-bold text-center bg-slate-950/80 py-0.5 rounded">
                             TARGET LOCKED
                         </div>
                     </div>
 
-                    <div
-                        class="relative h-28 bg-slate-950 rounded border border-slate-800 overflow-hidden flex flex-col justify-between p-2">
-                        <canvas id="vslam-canvas" width="160" height="110"
-                            class="absolute inset-0 w-full h-full"></canvas>
-                        <div
-                            class="relative z-10 flex justify-between text-xs font-mono bg-slate-950/80 px-1.5 py-0.5 rounded text-cyan-300 font-bold">
+                    <div class="relative h-24 bg-slate-950 rounded-lg border border-slate-800 overflow-hidden flex flex-col justify-between p-1.5">
+                        <canvas id="vslam-canvas" width="160" height="96" class="absolute inset-0 w-full h-full"></canvas>
+                        <div class="relative z-10 flex justify-between text-[10px] font-mono bg-slate-950/80 px-1 py-0.5 rounded text-cyan-300 font-bold">
                             <span>VIO KEY</span>
                             <span>30 FPS</span>
                         </div>
-                        <div
-                            class="relative z-10 text-xs font-mono text-cyan-300 font-extrabold text-center bg-slate-950/80 py-0.5 rounded">
+                        <div class="relative z-10 text-[9px] font-mono text-cyan-300 font-bold text-center bg-slate-950/80 py-0.5 rounded">
                             MATCH (99.2%)
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- 3. Real-Time Blackbox Event Log -->
-            <div
-                class="bg-slate-900 border border-slate-800 rounded-lg p-3 flex flex-col flex-1 hud-border min-h-[160px]">
-                <div class="flex items-center justify-between mb-2 border-b border-slate-800 pb-2">
-                    <div class="flex items-center space-x-2 font-mono text-white font-bold text-xs">
+            <!-- 5. BLACKBOX AUDIT LOG -->
+            <div class="hud-card p-3 flex flex-col flex-1 min-h-[140px]">
+                <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-800">
+                    <div class="flex items-center space-x-2 font-mono text-xs font-bold text-slate-200">
                         <i data-lucide="terminal" class="w-4 h-4 text-cyan-400"></i>
                         <span>BLACKBOX EVENT AUDIT LOG</span>
                     </div>
-                    <button onclick="clearEventLogs()"
-                        class="text-xs font-mono text-slate-400 hover:text-white font-semibold">CLEAR</button>
+                    <button onclick="clearEventLogs()" class="text-[10px] font-mono text-slate-400 hover:text-white">CLEAR</button>
                 </div>
-
-                <div id="syslog-feed" class="flex-1 overflow-y-auto font-mono text-xs space-y-2 pr-1"></div>
+                <div id="syslog-feed" class="flex-1 overflow-y-auto font-mono text-xs space-y-1.5 pr-1 max-h-36"></div>
             </div>
 
         </aside>
 
     </main>
 
+    <!-- ======================================================== -->
+    <!-- REAL-TIME AVIONICS SIMULATION ENGINE & SENSOR GRAPHICS   -->
+    <!-- ======================================================== -->
     <script>
         lucide.createIcons();
 
-        function updateClock() {
+        // Clocks & Timing
+        let missionSeconds = 42 * 60 + 25;
+        let flightSeconds = 23 * 60 + 16;
+        function updateAvionicsClocks() {
+            missionSeconds++;
+            flightSeconds++;
+            const formatTime = (total) => {
+                const h = Math.floor(total / 3600).toString().padStart(2, '0');
+                const m = Math.floor((total % 3600) / 60).toString().padStart(2, '0');
+                const s = (total % 60).toString().padStart(2, '0');
+                return `${h}:${m}:${s}`;
+            };
+            document.getElementById('mission-clock').innerText = formatTime(missionSeconds);
+            document.getElementById('flight-clock').innerText = formatTime(flightSeconds);
+
             const now = new Date();
             document.getElementById('utc-clock').innerText = now.toUTCString().split(' ')[4] + ' UTC';
+            document.getElementById('meteo-last-sync').innerText = now.toTimeString().split(' ')[0];
         }
-        setInterval(updateClock, 1000);
-        updateClock();
+        setInterval(updateAvionicsClocks, 1000);
+        updateAvionicsClocks();
 
-        const DEPOT = { lat: 1.3000, lon: 103.8000, name: "Queenstown Central Logistics Hub" };
-
-        const NFZ_ZONES = [
-            { lat: 1.3530, lon: 103.8200, radius: 1400, name: "NFZ-A: Central Catchment Air Reserve" },
-            { lat: 1.3700, lon: 103.8950, radius: 1600, name: "NFZ-B: Paya Lebar Aerodrome Buffer" },
-            { lat: 1.3644, lon: 103.9915, radius: 2200, name: "NFZ-C: Changi Coastal Buffer Zone" }
+        // 16-Airborne Assets Fleet Definition
+        const fleetData = [
+            { id: "UAV-ALPHA-01", callsign: "DF-1024", model: "Matrice 350 RTK", speed: 42.8, status: "On Patrol", alt: 48.2, soc: 89.5, power: 1.169, heading: 325, distanceRp: 24.7, progressPct: 82 },
+            { id: "UAV-BRAVO-02", callsign: "DF-1023", model: "EVTOL Long-Range", speed: 38.1, status: "En Route", alt: 55.0, soc: 88.1, power: 1.240, heading: 45, distanceRp: 18.2, progressPct: 65 },
+            { id: "UAV-CHARLIE-03", callsign: "DF-1022", model: "Heavy-Lift Quad", speed: 44.7, status: "Monitoring", alt: 42.6, soc: 94.2, power: 1.350, heading: 90, distanceRp: 12.5, progressPct: 90 },
+            { id: "UAV-DELTA-04", callsign: "DF-1021", model: "Inspection Hexa", speed: 36.4, status: "On Patrol", alt: 38.0, soc: 86.7, power: 1.050, heading: 140, distanceRp: 30.1, progressPct: 45 },
+            { id: "UAV-ECHO-05", callsign: "DF-1056", model: "Quantum VTOL V2", speed: 69.7, status: "Monitoring", alt: 58.5, soc: 91.8, power: 1.480, heading: 210, distanceRp: 22.4, progressPct: 78 },
+            { id: "UAV-FOXTROT-06", callsign: "DF-1019", model: "Falcon Express", speed: 52.0, status: "En Route", alt: 50.5, soc: 92.4, power: 1.190, heading: 280, distanceRp: 16.8, progressPct: 60 },
+            { id: "UAV-GOLF-07", callsign: "DF-1033", model: "Solar-Endurance 6S", speed: 34.5, status: "On Patrol", alt: 57.0, soc: 96.0, power: 0.940, heading: 15, distanceRp: 34.0, progressPct: 35 },
+            { id: "UAV-HOTEL-08", callsign: "DF-1044", model: "Urban Med-Courier", speed: 46.6, status: "On Patrol", alt: 44.0, soc: 89.3, power: 1.220, heading: 60, distanceRp: 14.2, progressPct: 88 },
+            { id: "UAV-INDIA-09", callsign: "DF-1012", model: "Scout Quad V3", speed: 39.0, status: "Monitoring", alt: 40.0, soc: 88.0, power: 1.080, heading: 110, distanceRp: 27.5, progressPct: 50 },
+            { id: "UAV-JULIETT-10", callsign: "DF-1015", model: "SkyRanger G2", speed: 49.2, status: "En Route", alt: 56.0, soc: 91.4, power: 1.310, heading: 175, distanceRp: 19.8, progressPct: 72 },
+            { id: "UAV-KILO-11", callsign: "DF-1018", model: "AeroPulse X4", speed: 43.1, status: "On Patrol", alt: 46.0, soc: 89.0, power: 1.150, heading: 235, distanceRp: 21.0, progressPct: 68 },
+            { id: "UAV-LIMA-12", callsign: "DF-1025", model: "LogiCopter 8X", speed: 47.8, status: "Monitoring", alt: 52.0, soc: 90.2, power: 1.270, heading: 290, distanceRp: 15.3, progressPct: 84 },
+            { id: "UAV-MIKE-13", callsign: "DF-1029", model: "SurveyWing RTK", speed: 41.0, status: "On Patrol", alt: 43.0, soc: 87.1, power: 1.120, heading: 340, distanceRp: 28.9, progressPct: 40 },
+            { id: "UAV-NOVEMBER-14", callsign: "DF-1035", model: "MedEvac Hornet", speed: 37.5, status: "En Route", alt: 39.0, soc: 86.8, power: 1.090, heading: 25, distanceRp: 32.1, progressPct: 30 },
+            { id: "UAV-OSCAR-15", callsign: "DF-1038", model: "StealthGrid 4S", speed: 45.5, status: "Monitoring", alt: 47.0, soc: 88.5, power: 1.210, heading: 85, distanceRp: 20.6, progressPct: 75 },
+            { id: "UAV-PAPA-16", callsign: "DF-1048", model: "Titan Cargo Heavy", speed: 39.2, status: "On Patrol", alt: 53.0, soc: 92.0, power: 1.420, heading: 130, distanceRp: 11.4, progressPct: 92 }
         ];
-
-        const WEATHER_REGIONS = [
-            {
-                id: "WX-RAIN-01",
-                type: "RAIN",
-                lat: 1.3350,
-                lon: 103.7100,
-                radius: 2200,
-                name: "Convective Rain Cell (West / Jurong Sector)",
-                intensity: "28 mm/h (Heavy Precipitation)",
-                color: "#f43f5e"
-            },
-            {
-                id: "WX-WIND-01",
-                type: "WIND",
-                lat: 1.2850,
-                lon: 103.8550,
-                radius: 2000,
-                name: "Coastal Wind Shear Zone (Marina / Straits)",
-                intensity: "36 km/h Gusts (Shear Warning)",
-                color: "#f59e0b"
-            },
-            {
-                id: "WX-CLEAR-01",
-                type: "CLEAR",
-                lat: 1.3700,
-                lon: 103.8500,
-                radius: 2500,
-                name: "Nominal Atmospheric Corridor (Central/Bishan)",
-                intensity: "Clear Air (Wind < 8 km/h, 29.4°C)",
-                color: "#10b981"
-            }
-        ];
-
-        // ---------------------------------------------------------
-        // 100% RELIABLE TANGENT DETOUR CALCULATOR
-        // ---------------------------------------------------------
-        function calculateTangentBypassPath(startLat, startLon, destLat, destLon) {
-            let detourWaypoints = [];
-            let conflictFound = false;
-
-            for (let nfz of NFZ_ZONES) {
-                const bufferRadiusM = nfz.radius + 500.0; // 500m hard safety buffer
-                const bufferRadiusDeg = bufferRadiusM / 111000.0;
-
-                const x0 = nfz.lon, y0 = nfz.lat;
-                const x1 = startLon, y1 = startLat;
-                const x2 = destLon, y2 = destLon ? destLat : destLat; // standard destLat
-
-                const l2 = (destLon - startLon) * (destLon - startLon) + (destLat - startLat) * (destLat - startLat);
-                if (l2 === 0) continue;
-                let t = ((x0 - startLon) * (destLon - startLon) + (y0 - startLat) * (destLat - startLat)) / l2;
-                t = Math.max(0, Math.min(1, t));
-
-                const projX = startLon + t * (destLon - startLon);
-                const projY = startLat + t * (destLat - startLat);
-                const distToLine = Math.hypot(x0 - projX, y0 - projY);
-
-                if (distToLine < bufferRadiusDeg) {
-                    conflictFound = true;
-                    const angleToNFZ = Math.atan2(nfz.lat - startLat, nfz.lon - startLon);
-                    const side = (destLon - startLon) * (nfz.lat - startLat) - (destLat - startLat) * (nfz.lon - startLon);
-                    const perp = angleToNFZ + (side >= 0 ? Math.PI / 2.2 : -Math.PI / 2.2);
-
-                    const wp1Lat = nfz.lat + Math.sin(perp) * (bufferRadiusDeg * 1.10);
-                    const wp1Lon = nfz.lon + Math.cos(perp) * (bufferRadiusDeg * 1.10);
-
-                    const wp2Lat = nfz.lat + Math.sin(perp + (side >= 0 ? 0.35 : -0.35)) * (bufferRadiusDeg * 1.18);
-                    const wp2Lon = nfz.lon + Math.cos(perp + (side >= 0 ? 0.35 : -0.35)) * (bufferRadiusDeg * 1.18);
-
-                    detourWaypoints.push([wp1Lat, wp1Lon]);
-                    detourWaypoints.push([wp2Lat, wp2Lon]);
-                    break;
-                }
-            }
-
-            detourWaypoints.push([destLat, destLon]);
-            return { path: detourWaypoints, conflictResolved: conflictFound };
-        }
-
-        // Sanitize baseline patrol routes to guarantee 0 initial NFZ overlaps
-        function sanitizePatrolRoute(baseWps) {
-            let sanitized = [];
-            for (let i = 0; i < baseWps.length; i++) {
-                const current = baseWps[i];
-                const next = baseWps[(i + 1) % baseWps.length];
-                const detour = calculateTangentBypassPath(current[0], current[1], next[0], next[1]);
-                sanitized.push(...detour.path);
-            }
-            return sanitized;
-        }
-
-        const rawFleetData = [
-            { id: "UAV-ALPHA-01", model: "Matrice 350 RTK", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3400, 103.7050]], alt: 48.2, speed: 18.2, heading: 290, soc: 89.5, temp: 33.4, lidar: 45.0 },
-            { id: "UAV-BRAVO-02", model: "EVTOL Long-Range", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.4250, 103.8350]], alt: 55.0, speed: 20.4, heading: 15, soc: 88.1, temp: 36.1, lidar: 50.0 },
-            { id: "UAV-CHARLIE-03", model: "Heavy-Lift Quad", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3532, 103.9450]], alt: 42.6, speed: 15.5, heading: 70, soc: 94.2, temp: 31.8, lidar: 35.0 },
-            { id: "UAV-DELTA-04", model: "Inspection Hexa", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.2820, 103.8600]], alt: 38.0, speed: 12.8, heading: 105, soc: 86.7, temp: 39.2, lidar: 40.0 },
-            { id: "UAV-ECHO-05", model: "Quantum VTOL V2", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3880, 103.7620]], alt: 58.5, speed: 22.1, heading: 335, soc: 91.8, temp: 33.0, lidar: 55.0 },
-            { id: "UAV-FOXTROT-06", model: "Falcon Express", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.4050, 103.9050]], alt: 50.5, speed: 18.0, heading: 45, soc: 92.4, temp: 35.5, lidar: 48.0 },
-            { id: "UAV-GOLF-07", model: "Solar-Endurance 6S", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3500, 103.8500]], alt: 57.0, speed: 14.5, heading: 45, soc: 96.0, temp: 30.5, lidar: 42.0 },
-            { id: "UAV-HOTEL-08", model: "Urban Med-Courier", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3120, 103.9300]], alt: 44.0, speed: 16.6, heading: 85, soc: 89.3, temp: 37.2, lidar: 38.0 },
-            { id: "UAV-INDIA-09", model: "Scout Quad V3", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3200, 103.7550]], alt: 40.0, speed: 15.0, heading: 295, soc: 88.0, temp: 32.8, lidar: 40.0 },
-            { id: "UAV-JULIETT-10", model: "SkyRanger G2", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.4380, 103.7880]], alt: 56.0, speed: 19.2, heading: 355, soc: 91.4, temp: 33.7, lidar: 52.0 },
-            { id: "UAV-KILO-11", model: "AeroPulse X4", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3820, 103.8480]], alt: 46.0, speed: 17.1, heading: 30, soc: 89.0, temp: 34.6, lidar: 44.0 },
-            { id: "UAV-LIMA-12", model: "LogiCopter 8X", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3720, 103.8880]], alt: 52.0, speed: 17.8, heading: 50, soc: 90.2, temp: 31.9, lidar: 46.0 },
-            { id: "UAV-MIKE-13", model: "SurveyWing RTK", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3350, 103.7420]], alt: 43.0, speed: 16.0, heading: 300, soc: 87.1, temp: 33.2, lidar: 41.0 },
-            { id: "UAV-NOVEMBER-14", model: "MedEvac Hornet", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.2780, 103.8220]], alt: 39.0, speed: 13.5, heading: 145, soc: 86.8, temp: 36.8, lidar: 39.0 },
-            { id: "UAV-OSCAR-15", model: "StealthGrid 4S", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3220, 103.8750]], alt: 47.0, speed: 17.5, heading: 75, soc: 88.5, temp: 34.0, lidar: 43.0 },
-            { id: "UAV-PAPA-16", model: "Titan Cargo Heavy", lat: 1.3000, lon: 103.8000, waypoints: [[1.3000, 103.8000], [1.3820, 103.9620]], alt: 53.0, speed: 15.2, heading: 70, soc: 92.0, temp: 32.1, lidar: 47.0 }
-        ];
-
-        const fleet = rawFleetData.map(d => {
-            const sanitizedWps = sanitizePatrolRoute(d.waypoints);
-            return {
-                ...d,
-                initialSoc: d.soc,
-                baseSpeed: d.speed,
-                defaultWaypoints: sanitizedWps,
-                activeWaypoints: JSON.parse(JSON.stringify(sanitizedWps)),
-                wpIndex: 0,
-                flightPhase: "PATROL_DELIVERY",
-                weatherCondition: "CLEAR (NOMINAL)",
-                status: "NOMINAL"
-            };
-        });
 
         let selectedDroneId = "UAV-ALPHA-01";
-        let isGlobalRTL = false;
-        let isGeofenceEnforced = true;
-        let isMapZooming = false;
+        let isRcOverride = false;
+        let timelineRange = '24H';
 
-        const map = L.map('tactical-map', {
-            center: [1.3521, 103.8198],
-            zoom: 12,
-            minZoom: 10,
-            maxZoom: 18,
-            zoomSnap: 0.5,
-            zoomDelta: 0.5,
-            wheelPxPerZoomLevel: 120,
-            wheelDebounceTime: 40,
-            zoomAnimation: true,
-            fadeAnimation: true,
-            markerZoomAnimation: true,
-            inertia: true,
-            inertiaDeceleration: 2500,
-            preferCanvas: true,
-            zoomControl: false,
-            attributionControl: false
-        });
+        // Render Fleet List
+        function renderFleetList() {
+            const container = document.getElementById('fleet-list-container');
+            container.innerHTML = '';
+            fleetData.forEach(d => {
+                const isSelected = d.id === selectedDroneId;
+                let dotColor = 'bg-emerald-400';
+                if (d.status === 'En Route') dotColor = 'bg-orange-400';
+                else if (d.status === 'Monitoring') dotColor = 'bg-cyan-400';
 
-        map.on('zoomstart', () => { isMapZooming = true; });
-        map.on('zoomend', () => {
-            isMapZooming = false;
-            fleet.forEach(drone => {
-                drone.marker.setLatLng([drone.lat, drone.lon]);
-                drone.lidarCircle.setLatLng([drone.lat, drone.lon]);
-                drone.polyline.setLatLngs([[drone.lat, drone.lon], ...drone.activeWaypoints.slice(drone.wpIndex)]);
+                container.innerHTML += `
+                    <div onclick="selectDrone('${d.id}')" class="p-2 rounded-lg cursor-pointer transition flex items-center justify-between border ${isSelected ? 'bg-slate-900 border-orange-500/60 shadow-md' : 'bg-slate-950/60 border-slate-800/80 hover:bg-slate-900/50'}">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-2 h-2 rounded-full ${dotColor}"></span>
+                            <div>
+                                <span class="font-bold ${isSelected ? 'text-orange-400' : 'text-slate-200'}">${d.callsign} <span class="text-[10px] text-slate-500 font-normal">(${d.id})</span></span>
+                                <span class="text-[10px] text-slate-400 block">${d.model}</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="font-bold text-white">${d.speed.toFixed(1)} km/h</span>
+                            <span class="text-[10px] text-slate-400 block">${d.status}</span>
+                        </div>
+                    </div>
+                `;
             });
-        });
-
-        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            subdomains: 'abc',
-            updateWhenZooming: false,
-            updateInterval: 200
-        }).addTo(map);
-
-        function smoothZoomIn() {
-            map.zoomIn(0.5, { animate: true, duration: 0.3 });
         }
-        function smoothZoomOut() {
-            map.zoomOut(0.5, { animate: true, duration: 0.3 });
+        renderFleetList();
+
+        function selectDrone(id) {
+            selectedDroneId = id;
+            const drone = fleetData.find(d => d.id === id);
+            if (!drone) return;
+
+            document.getElementById('hdr-aircraft').innerText = `${drone.id} (${drone.model})`;
+            document.getElementById('pfd-uav-id').innerText = drone.id;
+            document.getElementById('power-val').innerHTML = `${drone.power.toFixed(3)} <span class="text-xs text-slate-400 font-normal">kW</span>`;
+            document.getElementById('fuel-val').innerHTML = `${(drone.power * 0.47).toFixed(3)} <span class="text-xs text-slate-400 font-normal">kW (${drone.soc.toFixed(1)}%)</span>`;
+            document.getElementById('telemetry-ias').innerText = `${(drone.speed * 1.6).toFixed(1)} km/h`;
+            document.getElementById('telemetry-alt').innerText = `${(drone.alt * 8.7).toFixed(0)} m`;
+            document.getElementById('pfd-alt').innerText = drone.alt.toFixed(1);
+            document.getElementById('pfd-heading').innerText = `${drone.heading.toString().padStart(3, '0')}°`;
+
+            // Update Mission Status ring & texts
+            document.getElementById('mission-pct-text').innerText = `${drone.progressPct}%`;
+            const circOffset = 251.2 - (251.2 * (drone.progressPct / 100));
+            document.getElementById('mission-progress-circle').style.strokeDashoffset = circOffset;
+            document.getElementById('status-state-text').innerText = drone.status.toUpperCase();
+            document.getElementById('status-dist-text').innerText = `${drone.distanceRp.toFixed(1)} km`;
+
+            // Update corridor route bar
+            document.getElementById('corridor-progress-fill').style.width = `${drone.progressPct}%`;
+            document.getElementById('route-stage-text').innerText = `${drone.id} EN ROUTE (${drone.alt.toFixed(1)}m AGL)`;
+
+            // Update Compass Needle
+            document.getElementById('compass-needle').setAttribute('transform', `rotate(${drone.heading} 50 50)`);
+
+            renderFleetList();
+            addSyslog(`Telemetry focus switched to asset: ${drone.callsign} [${drone.id}]`, 'INFO');
         }
 
-        const depotIcon = L.divIcon({
-            className: 'custom-depot-marker',
-            html: '<div class="w-4 h-4 rounded-full bg-emerald-400 border-2 border-white shadow-[0_0_14px_#10b981]"></div>',
-            iconSize: [16, 16],
-            iconAnchor: [8, 8]
-        });
-        L.marker([DEPOT.lat, DEPOT.lon], { icon: depotIcon }).addTo(map).bindPopup("<b style='font-size:13px;'>Queenstown Central Depot Hub</b>");
+        // Toggle RC Override
+        function toggleRcOverride() {
+            isRcOverride = !isRcOverride;
+            const toggle = document.getElementById('rc-override-toggle');
+            const label = document.getElementById('rc-override-label');
+            const modePill = document.getElementById('control-mode-pill');
 
-        NFZ_ZONES.forEach(nfz => {
-            L.circle([nfz.lat, nfz.lon], {
-                radius: nfz.radius,
-                color: '#ef4444',
-                weight: 2,
-                fillColor: '#ef4444',
-                fillOpacity: 0.22,
-                dashArray: '4, 4'
-            }).addTo(map).bindPopup(`<b style='font-size:13px;'>${nfz.name}</b><br><span style='font-size:11px;'>Altitude: 0-120m AGL Restricted</span>`);
-        });
-
-        const weatherLayers = {
-            rain: L.layerGroup().addTo(map),
-            wind: L.layerGroup().addTo(map),
-            clear: L.layerGroup().addTo(map)
-        };
-
-        WEATHER_REGIONS.forEach(region => {
-            const circle = L.circle([region.lat, region.lon], {
-                radius: region.radius,
-                color: region.color,
-                weight: 2,
-                fillColor: region.color,
-                fillOpacity: region.type === 'RAIN' ? 0.35 : (region.type === 'WIND' ? 0.25 : 0.12),
-                dashArray: region.type === 'WIND' ? '6, 6' : null,
-                className: region.type === 'RAIN' ? 'weather-rain-cell' : ''
-            }).bindPopup(`
-                <div style="font-size:12px; font-family:'JetBrains Mono',monospace;">
-                    <b style="color:${region.color};">${region.name}</b><br>
-                    <span>Intensity: <b>${region.intensity}</b></span><br>
-                    <span>Radius: <b>${region.radius}m</b></span>
-                </div>
-            `);
-
-            if (region.type === 'RAIN') weatherLayers.rain.addLayer(circle);
-            else if (region.type === 'WIND') weatherLayers.wind.addLayer(circle);
-            else if (region.type === 'CLEAR') weatherLayers.clear.addLayer(circle);
-        });
-
-        function toggleWeatherLayer(layerKey) {
-            const layer = weatherLayers[layerKey];
-            const btn = document.getElementById(`btn-${layerKey}-layer`);
-            if (map.hasLayer(layer)) {
-                map.removeLayer(layer);
-                btn.style.opacity = "0.45";
-                addSyslog(`Disabled ${layerKey.toUpperCase()} atmospheric visualization layer.`, 'INFO');
+            if (isRcOverride) {
+                toggle.classList.add('active');
+                label.innerText = 'ACTIVE';
+                label.className = 'text-[10px] text-orange-400 font-bold';
+                modePill.innerText = 'MANUAL RC';
+                modePill.className = 'px-2.5 py-0.5 rounded bg-orange-500/20 text-orange-300 border border-orange-500/40 font-bold text-xs';
+                addSyslog('[FLIGHT MODE] RC Override engaged. Manual pilot flight control active.', 'WARN');
             } else {
-                map.addLayer(layer);
-                btn.style.opacity = "1.0";
-                addSyslog(`Enabled ${layerKey.toUpperCase()} atmospheric visualization layer.`, 'INFO');
+                toggle.classList.remove('active');
+                label.innerText = 'INACTIVE';
+                label.className = 'text-[10px] text-slate-400 font-bold';
+                modePill.innerText = 'AUTO';
+                modePill.className = 'px-2.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/40 font-bold text-xs';
+                addSyslog('[FLIGHT MODE] Auto-navigation re-engaged. SMT trajectory lock restored.', 'INFO');
             }
         }
 
-        fleet.forEach(drone => {
-            drone.polyline = L.polyline([[drone.lat, drone.lon], ...drone.activeWaypoints], {
-                color: '#00e5ff',
-                weight: 2,
-                dashArray: '3, 6',
-                opacity: 0.85
-            }).addTo(map);
+        // ---------------------------------------------------------
+        // METEO WIND SPEED CANVAS CHART (IMAGE 2 REPLICA)
+        // ---------------------------------------------------------
+        const meteoWindCanvas = document.getElementById('meteo-wind-canvas');
+        const meteoWindCtx = meteoWindCanvas.getContext('2d');
+        const windPoints = [68, 72, 64, 70, 65, 78, 74, 82, 76, 75, 94, 86, 92, 85, 87];
 
-            drone.lidarCircle = L.circle([drone.lat, drone.lon], {
-                radius: drone.lidar * 8,
-                color: '#00e5ff',
-                weight: 1,
-                fillColor: '#00e5ff',
-                fillOpacity: 0.10
-            }).addTo(map);
+        function drawMeteoWindChart() {
+            const w = meteoWindCanvas.width;
+            const h = meteoWindCanvas.height;
+            meteoWindCtx.clearRect(0, 0, w, h);
 
-            const iconHtml = `
-                <div class="drone-marker-container">
-                    <div id="map-drone-${drone.id}" style="width:26px; height:26px; display:flex; align-items:center; justify-content:center; transform-origin:center center; transform:rotate(${drone.heading}deg);">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="#00e5ff" style="filter: drop-shadow(0 0 6px #00e5ff); display:block;">
-                            <path d="M12 2L4 20L12 16L20 20L12 2Z"/>
-                        </svg>
-                    </div>
-                </div>
-            `;
-            drone.marker = L.marker([drone.lat, drone.lon], {
-                icon: L.divIcon({
-                    className: 'custom-drone-icon',
-                    html: iconHtml,
-                    iconSize: [26, 26],
-                    iconAnchor: [13, 13]
-                })
-            }).addTo(map);
+            // Subtle Grid Lines
+            meteoWindCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            meteoWindCtx.lineWidth = 1;
+            for (let y = 20; y < h; y += 25) {
+                meteoWindCtx.beginPath();
+                meteoWindCtx.moveTo(0, y);
+                meteoWindCtx.lineTo(w, y);
+                meteoWindCtx.stroke();
+            }
 
-            drone.marker.on('click', () => {
-                selectDrone(drone.id);
+            // Path calculation
+            const stepX = w / (windPoints.length - 1);
+            const minY = 40, maxY = 120;
+            const getY = (val) => h - ((val - minY) / (maxY - minY)) * (h - 20) - 10;
+
+            // Area Gradient
+            const grad = meteoWindCtx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, 'rgba(240, 118, 50, 0.35)');
+            grad.addColorStop(1, 'rgba(240, 118, 50, 0.0)');
+
+            meteoWindCtx.beginPath();
+            meteoWindCtx.moveTo(0, getY(windPoints[0]));
+            for (let i = 1; i < windPoints.length; i++) {
+                const prevX = (i - 1) * stepX;
+                const prevY = getY(windPoints[i - 1]);
+                const curX = i * stepX;
+                const curY = getY(windPoints[i]);
+                const midX = (prevX + curX) / 2;
+                meteoWindCtx.bezierCurveTo(midX, prevY, midX, curY, curX, curY);
+            }
+            meteoWindCtx.lineTo(w, h);
+            meteoWindCtx.lineTo(0, h);
+            meteoWindCtx.closePath();
+            meteoWindCtx.fillStyle = grad;
+            meteoWindCtx.fill();
+
+            // Line Stroke
+            meteoWindCtx.beginPath();
+            meteoWindCtx.moveTo(0, getY(windPoints[0]));
+            for (let i = 1; i < windPoints.length; i++) {
+                const prevX = (i - 1) * stepX;
+                const prevY = getY(windPoints[i - 1]);
+                const curX = i * stepX;
+                const curY = getY(windPoints[i]);
+                const midX = (prevX + curX) / 2;
+                meteoWindCtx.bezierCurveTo(midX, prevY, midX, curY, curX, curY);
+            }
+            meteoWindCtx.strokeStyle = '#f97316';
+            meteoWindCtx.lineWidth = 2.5;
+            meteoWindCtx.stroke();
+
+            // Highlight Peak Point (Index 10 = 94 KT)
+            const peakIdx = 10;
+            const px = peakIdx * stepX;
+            const py = getY(windPoints[peakIdx]);
+
+            meteoWindCtx.fillStyle = '#f97316';
+            meteoWindCtx.beginPath();
+            meteoWindCtx.arc(px, py, 4, 0, Math.PI * 2);
+            meteoWindCtx.fill();
+
+            // Badge Box "94 KT"
+            meteoWindCtx.fillStyle = '#0f172a';
+            meteoWindCtx.strokeStyle = '#f97316';
+            meteoWindCtx.lineWidth = 1.5;
+            meteoWindCtx.beginPath();
+            meteoWindCtx.roundRect(px + 8, py - 18, 48, 18, 4);
+            meteoWindCtx.fill();
+            meteoWindCtx.stroke();
+
+            meteoWindCtx.fillStyle = '#ffffff';
+            meteoWindCtx.font = 'bold 9px "JetBrains Mono"';
+            meteoWindCtx.fillText('94 KT', px + 14, py - 6);
+
+            // Time labels
+            meteoWindCtx.fillStyle = '#64748b';
+            meteoWindCtx.font = '8px "JetBrains Mono"';
+            meteoWindCtx.fillText('14:00', 4, h - 2);
+            meteoWindCtx.fillText('14:15', w * 0.22, h - 2);
+            meteoWindCtx.fillText('14:30', w * 0.44, h - 2);
+            meteoWindCtx.fillText('14:45', w * 0.66, h - 2);
+            meteoWindCtx.fillText('15:00', w * 0.88, h - 2);
+        }
+        drawMeteoWindChart();
+
+        // ---------------------------------------------------------
+        // MISSION TIMELINE CANVAS (24H, 7D, 30D) (IMAGE 1 REPLICA)
+        // ---------------------------------------------------------
+        const timelineCanvas = document.getElementById('mission-timeline-canvas');
+        const timelineCtx = timelineCanvas.getContext('2d');
+
+        function drawMissionTimeline() {
+            const w = timelineCanvas.width;
+            const h = timelineCanvas.height;
+            timelineCtx.clearRect(0, 0, w, h);
+
+            // Grid lines
+            timelineCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            timelineCtx.lineWidth = 1;
+            for (let y = 20; y < h - 20; y += 30) {
+                timelineCtx.beginPath();
+                timelineCtx.moveTo(35, y);
+                timelineCtx.lineTo(w - 15, y);
+                timelineCtx.stroke();
+            }
+
+            let numBars = timelineRange === '24H' ? 48 : (timelineRange === '7D' ? 28 : 30);
+            const barW = (w - 60) / numBars;
+
+            // Generate deterministic altitude bars
+            for (let i = 0; i < numBars; i++) {
+                let factor = Math.sin(i * 0.35) * 0.4 + Math.cos(i * 0.7) * 0.3 + 0.5;
+                if (i % 7 === 0) factor *= 1.35;
+                factor = Math.max(0.15, Math.min(0.95, factor));
+
+                const barH = factor * (h - 45);
+                const bx = 38 + i * barW;
+                const by = h - 20 - barH;
+
+                timelineCtx.fillStyle = (i % 5 === 0) ? '#22c55e' : 'rgba(34, 197, 94, 0.55)';
+                timelineCtx.fillRect(bx, by, Math.max(2, barW - 2), barH);
+            }
+
+            // Airspeed Overlay Curve
+            timelineCtx.beginPath();
+            timelineCtx.strokeStyle = '#f97316';
+            timelineCtx.lineWidth = 2;
+            for (let i = 0; i < numBars; i++) {
+                const bx = 38 + i * barW + barW / 2;
+                const spdY = h - 25 - (Math.sin(i * 0.4) * 0.3 + 0.45) * (h - 50);
+                if (i === 0) timelineCtx.moveTo(bx, spdY);
+                else timelineCtx.lineTo(bx, spdY);
+            }
+            timelineCtx.stroke();
+
+            // Y-Axis labels
+            timelineCtx.fillStyle = '#64748b';
+            timelineCtx.font = '8px "JetBrains Mono"';
+            timelineCtx.fillText('600m', 6, 25);
+            timelineCtx.fillText('400m', 6, 55);
+            timelineCtx.fillText('200m', 6, 85);
+            timelineCtx.fillText('0m', 15, h - 20);
+
+            // X-Axis labels
+            if (timelineRange === '24H') {
+                timelineCtx.fillText('00:00', 38, h - 6);
+                timelineCtx.fillText('06:00', w * 0.28, h - 6);
+                timelineCtx.fillText('12:00', w * 0.52, h - 6);
+                timelineCtx.fillText('18:00', w * 0.76, h - 6);
+                timelineCtx.fillText('24:00', w - 40, h - 6);
+            } else if (timelineRange === '7D') {
+                const days = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+                days.forEach((d, idx) => {
+                    timelineCtx.fillText(d, 40 + idx * ((w - 60) / 7), h - 6);
+                });
+            } else {
+                timelineCtx.fillText('WK 1', 40, h - 6);
+                timelineCtx.fillText('WK 2', w * 0.35, h - 6);
+                timelineCtx.fillText('WK 3', w * 0.65, h - 6);
+                timelineCtx.fillText('WK 4', w - 45, h - 6);
+            }
+        }
+        drawMissionTimeline();
+
+        function setTimelineRange(range) {
+            timelineRange = range;
+            ['24h', '7d', '30d'].forEach(r => {
+                const btn = document.getElementById(`btn-timeline-${r}`);
+                if (r === range.toLowerCase()) {
+                    btn.className = 'px-3 py-1 rounded bg-orange-500 text-white font-bold transition shadow-sm';
+                } else {
+                    btn.className = 'px-3 py-1 rounded text-slate-400 hover:text-white font-medium transition';
+                }
             });
-        });
-
-        function centerMapSingapore() {
-            map.flyTo([1.3521, 103.8198], 12, { duration: 1.0 });
+            drawMissionTimeline();
+            addSyslog(`Mission history timeline scaled to window: [${range}]`, 'INFO');
         }
 
+        // ---------------------------------------------------------
+        // LIVE SPARKLINE CANVASES
+        // ---------------------------------------------------------
+        function drawSparkline(canvasId, data, strokeColor, fillColor) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0, 0, w, h);
+
+            const min = Math.min(...data), max = Math.max(...data);
+            const range = (max - min) || 1;
+            const stepX = w / (data.length - 1);
+
+            ctx.beginPath();
+            ctx.moveTo(0, h - ((data[0] - min) / range) * (h - 8) - 4);
+            for (let i = 1; i < data.length; i++) {
+                const x = i * stepX;
+                const y = h - ((data[i] - min) / range) * (h - 8) - 4;
+                ctx.lineTo(x, y);
+            }
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+
+            ctx.lineTo(w, h);
+            ctx.lineTo(0, h);
+            ctx.closePath();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+        }
+
+        const sparkDataIAS = [62, 65, 68, 67, 69, 71, 68.5];
+        const sparkDataAlt = [390, 405, 412, 418, 422, 420, 420];
+        const sparkDataTemp = [108, 110, 112, 113, 115, 114, 114];
+
+        drawSparkline('spark-ias', sparkDataIAS, '#00e5ff', 'rgba(0, 229, 255, 0.15)');
+        drawSparkline('spark-alt', sparkDataAlt, '#10b981', 'rgba(16, 185, 129, 0.15)');
+        drawSparkline('spark-temp', sparkDataTemp, '#f97316', 'rgba(249, 115, 22, 0.15)');
+
+        // ---------------------------------------------------------
+        // SYNTHETIC VISION HUD / PFD
+        // ---------------------------------------------------------
         const pfdCanvas = document.getElementById('pfd-canvas');
         const pfdCtx = pfdCanvas.getContext('2d');
-
-        let pfdPitch = 2.4;
-        let pfdRoll = -1.2;
-        let pfdHeading = 42;
+        let pfdPitch = 2.4, pfdRoll = -1.2, pfdTick = 0;
 
         function renderPFD() {
-            const w = pfdCanvas.width;
-            const h = pfdCanvas.height;
-            const cx = w / 2;
-            const cy = h / 2;
+            pfdTick++;
+            const w = pfdCanvas.width, h = pfdCanvas.height;
+            const cx = w / 2, cy = h / 2;
 
             pfdCtx.save();
             pfdCtx.clearRect(0, 0, w, h);
-
             pfdCtx.translate(cx, cy);
-            pfdCtx.rotate((pfdRoll * Math.PI) / 180);
-            const pitchOffset = pfdPitch * 3;
 
-            pfdCtx.fillStyle = '#0e2439';
+            const dynamicRoll = pfdRoll + Math.sin(pfdTick * 0.03) * 0.8;
+            pfdCtx.rotate((dynamicRoll * Math.PI) / 180);
+            const pitchOffset = (pfdPitch + Math.cos(pfdTick * 0.04) * 0.5) * 3;
+
+            // Sky & Ground
+            pfdCtx.fillStyle = '#0b1d2e';
             pfdCtx.fillRect(-w, -h * 2 + pitchOffset, w * 2, h * 2);
-            pfdCtx.fillStyle = '#26170a';
+            pfdCtx.fillStyle = '#22140a';
             pfdCtx.fillRect(-w, pitchOffset, w * 2, h * 2);
 
+            // Horizon Line
             pfdCtx.strokeStyle = '#00e5ff';
-            pfdCtx.lineWidth = 2.5;
+            pfdCtx.lineWidth = 2;
             pfdCtx.beginPath();
             pfdCtx.moveTo(-w, pitchOffset);
             pfdCtx.lineTo(w, pitchOffset);
             pfdCtx.stroke();
 
+            // Ladder
             pfdCtx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-            pfdCtx.lineWidth = 1.5;
-            pfdCtx.font = '11px "JetBrains Mono", monospace';
+            pfdCtx.lineWidth = 1.2;
+            pfdCtx.font = '10px "JetBrains Mono"';
             pfdCtx.fillStyle = '#ffffff';
-
             [-20, -10, 10, 20].forEach(deg => {
-                const ladderY = pitchOffset - deg * 3;
+                const ladderY = pitchOffset - deg * 2.8;
                 pfdCtx.beginPath();
-                pfdCtx.moveTo(-24, ladderY);
-                pfdCtx.lineTo(24, ladderY);
+                pfdCtx.moveTo(-20, ladderY);
+                pfdCtx.lineTo(20, ladderY);
                 pfdCtx.stroke();
-                pfdCtx.fillText(`${Math.abs(deg)}`, 28, ladderY + 4);
-                pfdCtx.fillText(`${Math.abs(deg)}`, -42, ladderY + 4);
+                pfdCtx.fillText(`${Math.abs(deg)}`, 24, ladderY + 3);
             });
-
             pfdCtx.restore();
 
-            pfdCtx.strokeStyle = '#fbbf24';
+            // Reticle Wings
+            pfdCtx.strokeStyle = '#f59e0b';
             pfdCtx.lineWidth = 2.5;
             pfdCtx.beginPath();
-            pfdCtx.moveTo(cx - 36, cy);
-            pfdCtx.lineTo(cx - 12, cy);
-            pfdCtx.lineTo(cx, cy + 10);
-            pfdCtx.lineTo(cx + 12, cy);
-            pfdCtx.lineTo(cx + 36, cy);
-            pfdCtx.stroke();
-
-            pfdCtx.strokeStyle = 'rgba(0, 229, 255, 0.7)';
-            pfdCtx.beginPath();
-            pfdCtx.arc(cx, cy, 70, Math.PI + 0.5, Math.PI * 2 - 0.5);
+            pfdCtx.moveTo(cx - 30, cy);
+            pfdCtx.lineTo(cx - 10, cy);
+            pfdCtx.lineTo(cx, cy + 8);
+            pfdCtx.lineTo(cx + 10, cy);
+            pfdCtx.lineTo(cx + 30, cy);
             pfdCtx.stroke();
 
             requestAnimationFrame(renderPFD);
         }
         renderPFD();
 
-        const neuralCtx = document.getElementById('neuralEnergyChart').getContext('2d');
-        const energyChart = new Chart(neuralCtx, {
-            type: 'line',
-            data: {
-                labels: ['-10s', '-8s', '-6s', '-4s', '-2s', 'NOW'],
-                datasets: [
-                    {
-                        label: 'MLP Surrogate (Wh/km)',
-                        data: [4.4, 4.3, 4.25, 4.20, 4.19, 4.18],
-                        borderColor: '#00e5ff',
-                        backgroundColor: 'rgba(0, 229, 255, 0.15)',
-                        borderWidth: 2.5,
-                        tension: 0.3,
-                        pointRadius: 3,
-                        fill: true
-                    },
-                    {
-                        label: 'Baseline 2-Opt Static',
-                        data: [5.8, 5.75, 5.78, 5.82, 5.80, 5.81],
-                        borderColor: '#a855f7',
-                        borderDash: [4, 4],
-                        borderWidth: 2,
-                        tension: 0.3,
-                        pointRadius: 0
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: {
-                        grid: { color: 'rgba(255, 255, 255, 0.08)' },
-                        ticks: { color: '#cbd5e1', font: { size: 11, family: 'JetBrains Mono', weight: 'bold' } }
-                    },
-                    y: {
-                        grid: { color: 'rgba(255, 255, 255, 0.08)' },
-                        ticks: { color: '#cbd5e1', font: { size: 11, family: 'JetBrains Mono', weight: 'bold' } },
-                        min: 3.0,
-                        max: 6.5
-                    }
-                }
-            }
-        });
-
+        // ---------------------------------------------------------
+        // FLIR THERMAL IR & VSLAM CANVASES
+        // ---------------------------------------------------------
         const thermalCanvas = document.getElementById('thermal-canvas');
         const thermalCtx = thermalCanvas.getContext('2d');
-
         function renderThermal() {
-            const w = thermalCanvas.width;
-            const h = thermalCanvas.height;
+            const w = thermalCanvas.width, h = thermalCanvas.height;
             thermalCtx.clearRect(0, 0, w, h);
 
-            const grad = thermalCtx.createRadialGradient(w / 2, h / 2, 5, w / 2, h / 2, 60);
+            const grad = thermalCtx.createRadialGradient(w / 2, h / 2, 4, w / 2, h / 2, 50);
             grad.addColorStop(0, '#fef08a');
-            grad.addColorStop(0.3, '#f97316');
+            grad.addColorStop(0.35, '#f97316');
             grad.addColorStop(0.7, '#7c2d12');
-            grad.addColorStop(1, '#0f172a');
+            grad.addColorStop(1, '#070d18');
             thermalCtx.fillStyle = grad;
             thermalCtx.fillRect(0, 0, w, h);
 
             thermalCtx.strokeStyle = '#10b981';
-            thermalCtx.lineWidth = 2;
-            thermalCtx.strokeRect(w / 2 - 18, h / 2 - 18, 36, 36);
+            thermalCtx.lineWidth = 1.8;
+            thermalCtx.strokeRect(w / 2 - 16, h / 2 - 16, 32, 32);
             thermalCtx.beginPath();
             thermalCtx.moveTo(w / 2, 0); thermalCtx.lineTo(w / 2, h);
-            thermalCtx.moveTo(0, h / 2); thermalCtx.lineTo(w / 2, h / 2);
+            thermalCtx.moveTo(0, h / 2); thermalCtx.lineTo(w, h / 2);
             thermalCtx.stroke();
         }
         renderThermal();
 
         const vslamCanvas = document.getElementById('vslam-canvas');
         const vslamCtx = vslamCanvas.getContext('2d');
-
         function renderVSLAM() {
-            const w = vslamCanvas.width;
-            const h = vslamCanvas.height;
-            vslamCtx.fillStyle = '#060b14';
+            const w = vslamCanvas.width, h = vslamCanvas.height;
+            vslamCtx.fillStyle = '#070d18';
             vslamCtx.fillRect(0, 0, w, h);
 
             vslamCtx.fillStyle = '#00e5ff';
-            for (let i = 0; i < 25; i++) {
-                const x = (Math.sin(Date.now() * 0.001 + i) * 0.4 + 0.5) * w;
-                const y = (Math.cos(Date.now() * 0.0012 + i * 2) * 0.4 + 0.5) * h;
+            for (let i = 0; i < 22; i++) {
+                const x = (Math.sin(Date.now() * 0.001 + i * 1.3) * 0.42 + 0.5) * w;
+                const y = (Math.cos(Date.now() * 0.0014 + i * 2.1) * 0.42 + 0.5) * h;
                 vslamCtx.beginPath();
-                vslamCtx.arc(x, y, 2, 0, Math.PI * 2);
+                vslamCtx.arc(x, y, 1.8, 0, Math.PI * 2);
                 vslamCtx.fill();
             }
             requestAnimationFrame(renderVSLAM);
         }
         renderVSLAM();
 
-        function renderCellMatrix(baseVolts = 4.14) {
-            const cellContainer = document.getElementById('cell-matrix');
-            cellContainer.innerHTML = '';
-            for (let i = 1; i <= 6; i++) {
-                const volt = (baseVolts + (Math.random() * 0.006 - 0.003)).toFixed(3);
-                cellContainer.innerHTML += `
-                    <div class="bg-slate-950 p-1.5 rounded border border-slate-800 text-center">
-                        <div class="text-[10px] text-slate-400 font-bold">C${i}</div>
-                        <div class="text-xs font-extrabold text-emerald-300 font-mono">${volt}</div>
-                    </div>
-                `;
-            }
-        }
-        renderCellMatrix();
-
-        const telemetryTableBody = document.getElementById('swarm-telemetry-tbody');
-
-        function buildTelemetryTable() {
-            telemetryTableBody.innerHTML = '';
-            fleet.forEach(drone => {
-                const isSelected = drone.id === selectedDroneId;
-                let statusColor = 'text-emerald-400 font-bold';
-                if (drone.flightPhase === 'OPTIMIZED_DELIVERY') statusColor = 'text-violet-400 font-extrabold';
-                else if (drone.flightPhase === 'JOB_COMPLETED_RTL') statusColor = 'text-amber-400 font-extrabold';
-                else if (drone.flightPhase === 'LANDED_AT_BASE') statusColor = 'text-cyan-300 font-extrabold';
-                else if (drone.flightPhase === 'HOVER_HOLD' || drone.flightPhase === 'EMERGENCY_AUTOLAND') statusColor = 'text-rose-400 font-extrabold';
-
-                let wxBadgeColor = 'text-emerald-300';
-                if (drone.weatherCondition.includes('RAIN')) wxBadgeColor = 'text-rose-400 font-bold';
-                else if (drone.weatherCondition.includes('WIND')) wxBadgeColor = 'text-amber-300 font-bold';
-
-                telemetryTableBody.innerHTML += `
-                    <tr onclick="selectDrone('${drone.id}')" class="cursor-pointer hover:bg-slate-800/60 transition ${isSelected ? 'bg-cyan-950/50 border-l-4 border-cyan-400 font-bold' : ''}">
-                        <td class="p-2 font-bold ${isSelected ? 'text-cyan-300' : 'text-white'} text-xs">${drone.id}</td>
-                        <td class="p-2 text-slate-300 text-xs">${drone.model}</td>
-                        <td class="p-2 ${statusColor} text-xs">${drone.flightPhase}</td>
-                        <td class="p-2 ${wxBadgeColor} text-xs font-semibold">${drone.weatherCondition}</td>
-                        <td class="p-2 text-xs font-semibold">${drone.alt.toFixed(1)}m</td>
-                        <td class="p-2 text-xs font-semibold">${drone.speed.toFixed(1)}m/s</td>
-                        <td class="p-2 text-cyan-300 font-bold text-xs">${drone.heading}°</td>
-                        <td class="p-2 text-xs font-semibold">${drone.lidar.toFixed(0)}m</td>
-                        <td class="p-2 ${drone.soc < 30 ? 'text-rose-400 font-bold' : 'text-emerald-300 font-bold'} text-xs">${drone.soc.toFixed(1)}%</td>
-                        <td class="p-2 text-right space-x-1">
-                            <button onclick="event.stopPropagation(); triggerSingleReoptimize('${drone.id}')" class="px-1.5 py-0.5 rounded bg-violet-600/30 text-violet-300 border border-violet-500/40 hover:bg-violet-600/60 text-[10px] font-bold">⚡ RE-OPT</button>
-                            <button onclick="event.stopPropagation(); triggerSingleReplay('${drone.id}')" class="px-1.5 py-0.5 rounded bg-cyan-600/30 text-cyan-200 border border-cyan-400/40 hover:bg-cyan-600/60 text-[10px] font-bold">🔄 REPLAY</button>
-                            <button onclick="event.stopPropagation(); commandSingleDroneRTL('${drone.id}')" class="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-400 hover:bg-rose-500 hover:text-white text-[10px] font-bold">RTL</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-        buildTelemetryTable();
-
-        function selectDrone(droneId) {
-            selectedDroneId = droneId;
-            const drone = fleet.find(d => d.id === droneId);
-            if (!drone) return;
-
-            document.getElementById('pfd-uav-id').innerText = drone.id;
-            document.getElementById('selected-drone-title').innerText = `${drone.id} (${drone.model})`;
-            document.getElementById('selected-drone-soc').innerText = `${drone.soc.toFixed(1)}% SOC`;
-            document.getElementById('drone-quick-actions').classList.remove('hidden');
-
-            map.panTo([drone.lat, drone.lon], { animate: true, duration: 0.5 });
-            buildTelemetryTable();
-            addSyslog(`Selected tactical focus asset: ${drone.id} [${drone.model}]`, 'INFO');
-        }
-
         // ---------------------------------------------------------
-        // RE-OPTIMIZE COMMAND
+        // BLACKBOX SYSLOG & ACTIONS
         // ---------------------------------------------------------
-        function executeDroneReoptimization(drone) {
-            const deliveryTarget = drone.defaultWaypoints[0] || [drone.lat + 0.01, drone.lon + 0.01];
-
-            const deliveryOpt = calculateTangentBypassPath(drone.lat, drone.lon, deliveryTarget[0], deliveryTarget[1]);
-            const returnOpt = calculateTangentBypassPath(deliveryTarget[0], deliveryTarget[1], DEPOT.lat, DEPOT.lon);
-
-            drone.activeWaypoints = [...deliveryOpt.path, ...returnOpt.path];
-            drone.wpIndex = 0;
-            drone.flightPhase = "OPTIMIZED_DELIVERY";
-            drone.speed = drone.baseSpeed || 18.0;
-
-            drone.polyline.setStyle({
-                color: '#a855f7',
-                weight: 3.5,
-                dashArray: '4, 4',
-                opacity: 1.0
-            });
-        }
-
-        function triggerSingleReoptimize(droneId) {
-            const drone = fleet.find(d => d.id === droneId);
-            if (!drone) return;
-
-            executeDroneReoptimization(drone);
-
-            const optWhKm = (3.35 + Math.random() * 0.35).toFixed(2);
-            document.getElementById('mlp-consumption-val').innerText = `${optWhKm} Wh/km`;
-            document.getElementById('optimizer-status-tag').innerText = "CONVERGED";
-            document.getElementById('optimizer-status-tag').className = "text-xs font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold";
-
-            energyChart.data.datasets[0].data.push(parseFloat(optWhKm));
-            energyChart.data.datasets[0].data.shift();
-            energyChart.update();
-
-            addSyslog(`[AI REPLAN] Shortest conflict-free delivery & return trajectory computed for ${drone.id} (${optWhKm} Wh/km)`, 'WARN');
-            buildTelemetryTable();
-        }
-
-        function reoptimizeEntireSwarm() {
-            fleet.forEach(drone => {
-                executeDroneReoptimization(drone);
-            });
-
-            document.getElementById('mlp-consumption-val').innerText = "3.42 Wh/km";
-            document.getElementById('optimizer-status-tag').innerText = "SWARM CONVERGED";
-            document.getElementById('optimizer-status-tag').className = "text-xs font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold";
-
-            energyChart.data.datasets[0].data.push(3.42);
-            energyChart.data.datasets[0].data.shift();
-            energyChart.update();
-
-            addSyslog(`[SWARM AI REPLAN] All 16 UAVs engaged shortest collision-free delivery and return pipelines.`, 'WARN');
-            buildTelemetryTable();
-        }
-
-        // ---------------------------------------------------------
-        // REPLAY BACK ENGINE (GUARANTEED 100% NFZ CONFLICT-FREE)
-        // ---------------------------------------------------------
-        function triggerSingleReplay(droneId) {
-            const drone = fleet.find(d => d.id === droneId);
-            if (!drone) return;
-
-            const sanitizedWps = sanitizePatrolRoute(drone.defaultWaypoints);
-            drone.activeWaypoints = sanitizedWps;
-            drone.wpIndex = 0;
-            drone.flightPhase = "PATROL_DELIVERY";
-            drone.speed = drone.baseSpeed || 18.0;
-            drone.polyline.setStyle({ color: '#00e5ff', dashArray: '3, 6', weight: 2 });
-
-            addSyslog(`[REPLAY BACK] Restored standard NFZ-safe patrol & delivery rotation for ${drone.id}`, 'INFO');
-            buildTelemetryTable();
-        }
-
-        function replayNormalMissions() {
-            isGlobalRTL = false;
-            fleet.forEach(drone => {
-                const sanitizedWps = sanitizePatrolRoute(drone.defaultWaypoints);
-                drone.activeWaypoints = sanitizedWps;
-                drone.wpIndex = 0;
-                drone.flightPhase = "PATROL_DELIVERY";
-                drone.speed = drone.baseSpeed || 18.0;
-                drone.polyline.setStyle({ color: '#00e5ff', dashArray: '3, 6', weight: 2 });
-            });
-
-            document.getElementById('optimizer-status-tag').innerText = "READY";
-            document.getElementById('optimizer-status-tag').className = "text-xs font-mono px-1.5 py-0.5 rounded bg-violet-500/20 text-violet-300 font-bold";
-            document.getElementById('mlp-consumption-val').innerText = "4.18 Wh/km";
-            document.body.classList.remove('hud-border-alert');
-
-            addSyslog(`[REPLAY BACK SWARM] All 16 multi-UAV assets re-initialized to standard NFZ-safe patrol corridors.`, 'INFO');
-            buildTelemetryTable();
-        }
-
-        function commandSelectedDrone(action) {
-            const drone = fleet.find(d => d.id === selectedDroneId);
-            if (!drone) return;
-
-            if (action === 'RTL') {
-                commandSingleDroneRTL(drone.id);
-            } else if (action === 'HOLD') {
-                drone.flightPhase = 'HOVER_HOLD';
-                addSyslog(`[COMMAND] In-place precision hover commanded for ${drone.id}`, 'INFO');
-            } else if (action === 'RESUME') {
-                triggerSingleReplay(drone.id);
-            } else if (action === 'REPLAN') {
-                triggerSingleReoptimize(drone.id);
-            }
-            buildTelemetryTable();
-        }
-
-        function commandSingleDroneRTL(droneId) {
-            const drone = fleet.find(d => d.id === droneId);
-            if (drone) {
-                const rtlOpt = calculateTangentBypassPath(drone.lat, drone.lon, DEPOT.lat, DEPOT.lon);
-                drone.flightPhase = 'JOB_COMPLETED_RTL';
-                drone.activeWaypoints = rtlOpt.path;
-                drone.wpIndex = 0;
-                drone.speed = drone.baseSpeed || 18.0;
-                drone.polyline.setStyle({ color: '#ef4444', dashArray: null, weight: 3 });
-                addSyslog(`[OVERRIDE] Collision-free emergency RTL triggered for ${drone.id}`, 'WARN');
-                buildTelemetryTable();
-            }
-        }
-
-        function triggerGlobalRTL() {
-            isGlobalRTL = true;
-            fleet.forEach(drone => {
-                const rtlOpt = calculateTangentBypassPath(drone.lat, drone.lon, DEPOT.lat, DEPOT.lon);
-                drone.flightPhase = 'JOB_COMPLETED_RTL';
-                drone.activeWaypoints = rtlOpt.path;
-                drone.wpIndex = 0;
-                drone.speed = drone.baseSpeed || 18.0;
-                drone.polyline.setStyle({ color: '#ef4444', dashArray: null, weight: 3 });
-            });
-            addSyslog(`[SWARM COMMAND] GLOBAL RETURN-TO-LAUNCH INITIATED FOR ALL 16 UNITS`, 'WARN');
-            buildTelemetryTable();
-        }
-
-        function triggerGlobalEStop() {
-            fleet.forEach(drone => {
-                drone.flightPhase = 'EMERGENCY_AUTOLAND';
-                drone.speed = 0.0;
-            });
-            addSyslog(`[CRITICAL] GLOBAL E-STOP TRIGGERED. BALLISTIC PARACHUTE / AUTOLAND ARMED.`, 'ALERT');
-            document.body.classList.add('hud-border-alert');
-            buildTelemetryTable();
-        }
-
-        function toggleGeofenceShield() {
-            isGeofenceEnforced = !isGeofenceEnforced;
-            const btn = document.getElementById('toggle-geofence-btn');
-            if (isGeofenceEnforced) {
-                btn.className = "px-3.5 py-1.5 rounded bg-slate-800 text-white border border-slate-600 flex items-center space-x-1.5 text-xs font-bold";
-                document.getElementById('active-airspace-tag').innerText = "0 AIRSPACE BREACHES";
-                document.getElementById('active-airspace-tag').className = "text-emerald-400 font-bold";
-                addSyslog(`[GEOFENCE] 3D Boundary containment re-engaged. SMT Invariants Active.`, 'INFO');
-            } else {
-                btn.className = "px-3.5 py-1.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400 flex items-center space-x-1.5 text-xs font-bold";
-                document.getElementById('active-airspace-tag').innerText = "OVERRIDE UNRESTRICTED";
-                document.getElementById('active-airspace-tag').className = "text-amber-400 font-bold";
-                addSyslog(`[GEOFENCE WARNING] Airspace boundary override authorized by Operator`, 'WARN');
-            }
-        }
-
-        function toggleMapLayer(layerName) {
-            addSyslog(`Tactical UTM layer toggled: [${layerName.toUpperCase()}]`, 'INFO');
-        }
-
         const syslogFeed = document.getElementById('syslog-feed');
-
         function addSyslog(msg, level = 'INFO') {
             const time = new Date().toUTCString().split(' ')[4];
             let color = 'text-slate-200';
@@ -1394,153 +1406,70 @@
             const item = document.createElement('div');
             item.className = 'flex items-start space-x-2 py-0.5 text-xs';
             item.innerHTML = `
-                <span class="text-slate-400 shrink-0 font-mono text-xs font-medium">${time}</span>
-                <span class="px-1.5 py-0.5 rounded text-[11px] font-mono shrink-0 font-bold ${badge}">${level}</span>
-                <span class="${color} break-words leading-tight font-medium">${msg}</span>
+                <span class="text-slate-500 shrink-0 font-mono text-[10px]">${time}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-mono shrink-0 font-bold ${badge}">${level}</span>
+                <span class="${color} break-words leading-tight text-[11px] font-medium">${msg}</span>
             `;
             syslogFeed.prepend(item);
-
-            if (syslogFeed.children.length > 40) {
-                syslogFeed.removeChild(syslogFeed.lastChild);
-            }
+            if (syslogFeed.children.length > 30) syslogFeed.removeChild(syslogFeed.lastChild);
         }
 
         function clearEventLogs() {
             syslogFeed.innerHTML = '';
-            addSyslog('Event log buffer flushed by operator.', 'INFO');
+            addSyslog('Event audit buffer cleared by Operator.', 'INFO');
         }
 
-        addSyslog('AERO-AI Autonomous Ground Control Station initialized.', 'INFO');
-        addSyslog('Live Meteorological Doppler Radar Feed linked (NEA Meteorological Service).', 'INFO');
-        addSyslog('Zenoh C2 DDS transport bridge online (14.2ms).', 'INFO');
-        addSyslog('16-unit drone swarm SITL physics simulation linked successfully.', 'INFO');
-
-        // ---------------------------------------------------------
-        // 60Hz KINEMATIC INTEGRATOR WITH TANGENT PROJECTION
-        // ---------------------------------------------------------
-        let simTick = 0;
-
-        function runSwarmSimulation() {
-            simTick++;
-
-            fleet.forEach((drone) => {
-                // Real-time Local Weather Sampling
-                let inRain = false;
-                let inWind = false;
-
-                WEATHER_REGIONS.forEach(region => {
-                    const dLatM = (drone.lat - region.lat) * 111000;
-                    const dLonM = (drone.lon - region.lon) * 111000 * Math.cos(drone.lat * Math.PI / 180);
-                    const distM = Math.hypot(dLatM, dLonM);
-
-                    if (distM < region.radius) {
-                        if (region.type === 'RAIN') inRain = true;
-                        else if (region.type === 'WIND') inWind = true;
-                    }
-                });
-
-                if (inRain) drone.weatherCondition = "RAIN (28mm/h)";
-                else if (inWind) drone.weatherCondition = "WIND (36km/h)";
-                else drone.weatherCondition = "CLEAR (NOMINAL)";
-
-                if (drone.flightPhase === 'HOVER_HOLD' || drone.flightPhase === 'EMERGENCY_AUTOLAND' || drone.flightPhase === 'LANDED_AT_BASE') {
-                    return;
-                }
-
-                const target = drone.activeWaypoints[drone.wpIndex];
-                if (!target) return;
-
-                let dx = (target[1] - drone.lon) * Math.cos(drone.lat * Math.PI / 180);
-                let dy = target[0] - drone.lat;
-                const distToWp = Math.hypot(dx, dy);
-
-                // Continuous Boundary Deflection (Tangent Slide — Never Stalls)
-                NFZ_ZONES.forEach(nfz => {
-                    const nfzDy = (drone.lat - nfz.lat) * 111000.0;
-                    const nfzDx = (drone.lon - nfz.lon) * 111000.0 * Math.cos(drone.lat * Math.PI / 180.0);
-                    const distToNFZ = Math.hypot(nfzDx, nfzDy);
-                    const hardSafetyLimit = nfz.radius + 450.0; // 450m hard buffer
-
-                    if (distToNFZ < hardSafetyLimit && distToNFZ > 0) {
-                        const pushOut = (hardSafetyLimit - distToNFZ) / 111000.0;
-                        const radialAngle = Math.atan2(nfzDy, nfzDx);
-
-                        // Push outside circle radius
-                        drone.lat = nfz.lat + Math.sin(radialAngle) * (hardSafetyLimit / 111000.0);
-                        drone.lon = nfz.lon + (Math.cos(radialAngle) * (hardSafetyLimit / 111000.0)) / Math.cos(drone.lat * Math.PI / 180.0);
-
-                        // Slide along tangent
-                        const tangentAngle = radialAngle + Math.PI / 2;
-                        dy += Math.sin(tangentAngle) * 0.002;
-                        dx += Math.cos(tangentAngle) * 0.002;
-                    }
-                });
-
-                const stepDist = Math.hypot(dx, dy);
-                if (distToWp > 0.0006) {
-                    const step = (drone.flightPhase === 'OPTIMIZED_DELIVERY' || drone.flightPhase === 'JOB_COMPLETED_RTL') ? 0.00028 : 0.00016;
-                    drone.lat += (dy / stepDist) * step;
-                    drone.lon += (dx / stepDist) * step / Math.cos(drone.lat * Math.PI / 180);
-                    drone.heading = Math.round((Math.atan2(dx, dy) * 180 / Math.PI + 360) % 360);
-                    drone.soc = Math.max(12, drone.soc - 0.004);
-                } else {
-                    if (drone.flightPhase === 'JOB_COMPLETED_RTL') {
-                        if (drone.wpIndex < drone.activeWaypoints.length - 1) {
-                            drone.wpIndex++;
-                        } else {
-                            drone.flightPhase = 'LANDED_AT_BASE';
-                            drone.speed = 0.0;
-                            addSyslog(`[RECOVERY] ${drone.id} completed recall and landed at Queenstown Headquarters.`, 'INFO');
-                            buildTelemetryTable();
-                        }
-                    } else if (drone.flightPhase === 'OPTIMIZED_DELIVERY' || drone.flightPhase === 'PATROL_DELIVERY') {
-                        drone.wpIndex = (drone.wpIndex + 1) % drone.activeWaypoints.length;
-                        if (drone.wpIndex === 0) {
-                            drone.soc = drone.initialSoc || 90.0;
-                        }
-                    }
-                }
-
-                if (!isMapZooming && !map._animatingZoom) {
-                    drone.marker.setLatLng([drone.lat, drone.lon]);
-                    drone.lidarCircle.setLatLng([drone.lat, drone.lon]);
-                    drone.polyline.setLatLngs([[drone.lat, drone.lon], ...drone.activeWaypoints.slice(drone.wpIndex)]);
-                }
-
-                const svgEl = document.getElementById(`map-drone-${drone.id}`);
-                if (svgEl) {
-                    svgEl.style.transform = `rotate(${drone.heading}deg)`;
-                }
-
-                if (drone.id === selectedDroneId) {
-                    pfdPitch = (Math.sin(simTick * 0.05) * 4.0).toFixed(1);
-                    pfdRoll = (Math.cos(simTick * 0.04) * 6.0).toFixed(1);
-                    pfdHeading = drone.heading;
-
-                    document.getElementById('pfd-airspeed').innerText = drone.speed.toFixed(1);
-                    document.getElementById('pfd-alt').innerText = drone.alt.toFixed(1);
-                    document.getElementById('pfd-heading').innerText = `${drone.heading.toString().padStart(3, '0')}°`;
-                    document.getElementById('pfd-pitch-val').innerText = `${pfdPitch > 0 ? '+' : ''}${pfdPitch}°`;
-                    document.getElementById('pfd-roll-val').innerText = `${pfdRoll > 0 ? '+' : ''}${pfdRoll}°`;
-                }
-            });
-
-            if (simTick % 30 === 0) {
-                document.getElementById('c2-rtt').innerText = (13.5 + Math.random() * 1.8).toFixed(1) + ' ms';
-                document.getElementById('bms-volts').innerText = (24.8 + Math.random() * 0.08).toFixed(2) + ' V';
-                document.getElementById('bms-amps').innerText = (28.2 + Math.random() * 0.5).toFixed(2) + ' A';
-            }
-
-            requestAnimationFrame(runSwarmSimulation);
+        function calibrateMeteoSensors() {
+            addSyslog('Meteo sensor self-calibration sequence started...', 'INFO');
+            setTimeout(() => {
+                addSyslog('Anemometer ultrasonic baseline synchronized (0.01 kt drift).', 'INFO');
+                addSyslog('FLIR optical lens auto-calibrated: NUC thermal shutter cycle passed.', 'INFO');
+                addSyslog('VSLAM stereo baseline zero-point verified.', 'INFO');
+            }, 600);
         }
 
-        requestAnimationFrame(runSwarmSimulation);
+        function runLaunchCheck() {
+            addSyslog('[PRE-FLIGHT] Commencing automated multi-UAV launch integrity check...', 'WARN');
+            setTimeout(() => {
+                addSyslog('✓ Propulsion battery balance: 4.2 mV max delta (PASS)', 'INFO');
+                addSyslog('✓ Wind vector & micro-gust envelope: 1.4 kt nominal (PASS)', 'INFO');
+                addSyslog('✓ CAAS Airspace restriction buffers clear: 0 breaches (PASS)', 'INFO');
+                addSyslog('✓ Flight readiness confidence: 92% (READY FOR DEPLOYMENT)', 'INFO');
+            }, 800);
+        }
 
+        function reoptimizeEntireSwarm() {
+            addSyslog('[SWARM REPLAN] Running multi-UAV energy minimization pipeline...', 'WARN');
+            setTimeout(() => {
+                addSyslog('Shortest conflict-free trajectories generated for all 16 assets (6.2% Wh/km savings).', 'INFO');
+            }, 500);
+        }
+
+        function replayNormalMissions() {
+            addSyslog('[REPLAY] Re-initializing all 16 UAV assets to standard patrol corridors.', 'INFO');
+        }
+
+        function triggerGlobalRTL() {
+            addSyslog('[SWARM COMMAND] GLOBAL RETURN-TO-LAUNCH INITIATED FOR ALL UNITS.', 'WARN');
+        }
+
+        function triggerGlobalEStop() {
+            addSyslog('[CRITICAL] EMERGENCY ALL-STOP TRIGGERED. BALLISTIC PARACHUTES ARMED.', 'ALERT');
+        }
+
+        // Initialize log messages
+        addSyslog('AERO-AI Autonomous Ground Station & Meteo Node online.', 'INFO');
+        addSyslog('Linked with Meteo Ground Station MD-01 [Sector B].', 'INFO');
+        addSyslog('Zenoh C2 DDS telemetry stream synchronized (14.2ms).', 'INFO');
+        addSyslog('FLIR IR & VSLAM visual odometry pipeline locked.', 'INFO');
+
+        // Dynamic fluctuations loop
         setInterval(() => {
-            buildTelemetryTable();
-            renderCellMatrix();
-        }, 1000);
+            const currentRpm = 8500 + Math.floor(Math.random() * 260);
+            document.getElementById('rpm-val').innerText = currentRpm.toLocaleString();
+            document.getElementById('rpm-bar').style.width = `${(currentRpm / 12000) * 100}%`;
+            document.getElementById('c2-rtt').innerText = (13.8 + Math.random() * 1.2).toFixed(1) + ' ms';
+        }, 1500);
     </script>
 </body>
-
 </html>
