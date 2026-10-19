@@ -6,6 +6,14 @@ const format = (n, digits = 1) => Number(n || 0).toFixed(digits);
 function toast(message) { $('toast').textContent = message; $('toast').hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => $('toast').hidden = true, 4500); }
 function setOnline(value) { online = value; document.body.classList.toggle('disconnected', !value); $('connection').textContent = value ? '● Stream connected' : '○ Stream offline'; $('connection').classList.toggle('stale', !value); for (const id of ['play','rate','reset','hold','return','wind','optimize']) $(id).disabled = !value; }
 async function command(action, extras = {}) {
+  if (window.AeroSyncBus) {
+    try {
+      const snap = window.AeroSyncBus.sendCommand(action, extras);
+      if (snap) receive(snap);
+      toast(`${action === 'optimize' ? 'Routes recalculated' : action.toUpperCase()} · synchronized fleet`);
+    } catch (error) { toast(error.message); }
+    return;
+  }
   if (!online) return toast('Connection unavailable. Commands are disabled.');
   if (localSim) {
     try {
@@ -21,6 +29,7 @@ async function command(action, extras = {}) {
     receive(data); toast(`${action === 'optimize' ? 'Routes recalculated' : action.toUpperCase()} · synchronized fleet`);
   } catch (error) { toast(error.message); }
 }
+window.command = command;
 const point = (p, height = 120) => C.Cartesian3.fromDegrees(p.lon, p.lat, height);
 function cameraHome(duration) { if (viewer) viewer.camera.flyTo({ destination: C.Cartesian3.fromDegrees(103.835, overhead ? 1.352 : 1.135, overhead ? 34000 : 28000), orientation: { heading: 0, pitch: C.Math.toRadians(overhead ? -90 : -52), roll: 0 }, duration: duration !== undefined ? duration : (matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.2) }); }
 function syncZones(zones) {
@@ -136,7 +145,12 @@ function updateMap(data) {
   }
   if(follow){const d=data.drones.find(d=>d.id===selected);viewer.camera.setView({destination:C.Cartesian3.fromDegrees(d.position.lon,d.position.lat-.028,4500),orientation:{heading:0,pitch:C.Math.toRadians(-52),roll:0}});}
 }
-function selectAircraft(id) { selected = id; render(); }
+function selectAircraft(id) {
+  selected = id;
+  if (window.AeroSyncBus) window.AeroSyncBus.selectDrone(id);
+  render();
+}
+window.selectAircraft = selectAircraft;
 function renderFleet() {
   const query=$('fleet-search').value.toLowerCase();
   const filtered=snapshot.drones.filter(d=>`${d.id} ${d.name} ${d.destinationName || ''}`.toLowerCase().includes(query));
@@ -201,6 +215,15 @@ $('models-tab').onclick=openLearning;$('inspect-model').onclick=openLearning;$('
 $('export').onclick=()=>{if(!snapshot)return;const blob=new Blob([JSON.stringify(snapshot,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='stratum-simulation-snapshot.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Exported simulated telemetry; no credentials included.');};
 setInterval(()=>{$('clock').textContent=new Date().toLocaleTimeString('en-GB',{timeZone:'Asia/Singapore'})+' SGT';if(Date.now()-lastMessage>5000)setOnline(false);},1000);
 async function connect(){
+  if (window.AeroSyncBus) {
+    window.AeroSyncBus.onSnapshot((data, sel) => {
+      if (sel && sel !== selected) selected = sel;
+      if (!viewer) initMap(data);
+      receive(data);
+    });
+    setOnline(true);
+    return;
+  }
   try {
     if (window.__STRATUM_EMBEDDED_SIM__) throw new Error('Embedded cloud simulation');
     const response=await fetch('/api/state');if(!response.ok)throw new Error('State service unavailable');const data=await response.json();token=data.csrf;delete data.csrf;initMap(data);receive(data);

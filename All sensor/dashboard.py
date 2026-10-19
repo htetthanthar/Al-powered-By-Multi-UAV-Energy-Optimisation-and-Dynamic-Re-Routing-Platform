@@ -26,7 +26,168 @@ def _build_embedded_engine_js() -> str:
     )
 
 
-def _build_stratum_3d_html(embedded_engine_js: str) -> str:
+def _build_sync_bus_js() -> str:
+    """Provides a cross-frame telemetry bus that links Tab 1, Tab 2, and Tab 3."""
+    return """
+    window.AeroSyncBus = (function() {
+        const CHANNEL_NAME = 'aero_uav_telemetry_bus';
+        const parentWin = (function() {
+            try {
+                if (window.parent && window.parent.document) return window.parent;
+            } catch (e) {}
+            return window;
+        })();
+
+        if (!parentWin.__AERO_UAV_HUB__) {
+            parentWin.__AERO_UAV_HUB__ = {
+                sim: null,
+                selected: 'UAV-ALPHA-01',
+                latestSnapshot: null,
+                notifiers: new Set(),
+                isTickerMaster: false
+            };
+        }
+        const hub = parentWin.__AERO_UAV_HUB__;
+        if (!hub.notifiers) hub.notifiers = new Set();
+
+        const localListeners = new Set();
+        const notifyLocal = (snap, sel) => {
+            localListeners.forEach(fn => {
+                try { fn(snap, sel); } catch (e) {}
+            });
+        };
+        hub.notifiers.add(notifyLocal);
+        window.addEventListener('unload', () => {
+            hub.notifiers.delete(notifyLocal);
+        });
+
+        let bc = null;
+        try {
+            if (typeof BroadcastChannel !== 'undefined') {
+                bc = new BroadcastChannel(CHANNEL_NAME);
+            }
+        } catch (e) {}
+
+        if (!hub.sim && typeof window.__createStratumEmbeddedSim === 'function') {
+            try {
+                hub.sim = window.__createStratumEmbeddedSim();
+                hub.latestSnapshot = hub.sim.snapshot();
+            } catch (e) {
+                console.warn('Simulation init error:', e);
+            }
+        }
+
+        if (hub.sim && !hub.isTickerMaster) {
+            hub.isTickerMaster = true;
+            setInterval(() => {
+                if (hub.sim) {
+                    hub.sim.tick(0.4);
+                    const snap = hub.sim.snapshot();
+                    hub.latestSnapshot = snap;
+                    hub.notifiers.forEach(notify => {
+                        try { notify(snap, hub.selected); } catch (err) {}
+                    });
+                    if (bc) {
+                        try {
+                            bc.postMessage({ type: 'SNAPSHOT', snapshot: snap, selected: hub.selected });
+                        } catch (err) {}
+                    }
+                }
+            }, 400);
+        }
+
+        if (bc) {
+            bc.onmessage = (evt) => {
+                const data = evt.data;
+                if (!data) return;
+                if (data.type === 'SNAPSHOT') {
+                    hub.latestSnapshot = data.snapshot;
+                    if (data.selected) hub.selected = data.selected;
+                    if (!hub.isTickerMaster) {
+                        notifyLocal(data.snapshot, hub.selected);
+                    }
+                } else if (data.type === 'SELECT') {
+                    hub.selected = data.id;
+                    if (hub.latestSnapshot) {
+                        hub.notifiers.forEach(notify => {
+                            try { notify(hub.latestSnapshot, hub.selected); } catch (err) {}
+                        });
+                    }
+                } else if (data.type === 'COMMAND') {
+                    if (hub.sim) {
+                        try {
+                            hub.sim.command({ action: data.action, ...data.extras });
+                            const snap = hub.sim.snapshot();
+                            hub.latestSnapshot = snap;
+                            hub.notifiers.forEach(notify => {
+                                try { notify(snap, hub.selected); } catch (err) {}
+                            });
+                            bc.postMessage({ type: 'SNAPSHOT', snapshot: snap, selected: hub.selected });
+                        } catch (err) {
+                            console.warn('Sync command failed:', err);
+                        }
+                    }
+                }
+            };
+        }
+
+        return {
+            onSnapshot(callback) {
+                localListeners.add(callback);
+                if (hub.latestSnapshot) {
+                    try { callback(hub.latestSnapshot, hub.selected); } catch (e) {}
+                }
+            },
+            removeListener(callback) {
+                localListeners.delete(callback);
+            },
+            selectDrone(droneId) {
+                hub.selected = droneId;
+                if (hub.latestSnapshot) {
+                    hub.notifiers.forEach(notify => {
+                        try { notify(hub.latestSnapshot, droneId); } catch (err) {}
+                    });
+                }
+                if (bc) {
+                    try { bc.postMessage({ type: 'SELECT', id: droneId }); } catch (e) {}
+                }
+            },
+            sendCommand(action, extras = {}) {
+                if (hub.sim) {
+                    try {
+                        hub.sim.command({ action, ...extras });
+                        const snap = hub.sim.snapshot();
+                        hub.latestSnapshot = snap;
+                        hub.notifiers.forEach(notify => {
+                            try { notify(snap, hub.selected); } catch (err) {}
+                        });
+                        if (bc) {
+                            bc.postMessage({ type: 'SNAPSHOT', snapshot: snap, selected: hub.selected });
+                        }
+                        return snap;
+                    } catch (err) {
+                        console.warn('Local command execution error:', err);
+                    }
+                } else if (bc) {
+                    bc.postMessage({ type: 'COMMAND', action, extras });
+                }
+                return hub.latestSnapshot;
+            },
+            getSnapshot() {
+                return hub.latestSnapshot;
+            },
+            getSelected() {
+                return hub.selected;
+            },
+            getSim() {
+                return hub.sim;
+            }
+        };
+    })();
+    """
+
+
+def _build_stratum_3d_html(embedded_engine_js: str, sync_bus_js: str) -> str:
     index_src = (UAV_CMD_DIR / "public" / "index.html").read_text(encoding="utf-8")
     style_src = (UAV_CMD_DIR / "public" / "style.css").read_text(encoding="utf-8")
     app_src = (UAV_CMD_DIR / "public" / "app.js").read_text(encoding="utf-8")
@@ -68,6 +229,7 @@ def _build_stratum_3d_html(embedded_engine_js: str) -> str:
     html = html.replace(
         "<script>window.CESIUM_BASE_URL='/cesium/';</script><script src=\"/cesium/Cesium.js\"></script><script type=\"module\" src=\"/app.js\"></script>",
         f"<script>{worker_shim}window.CESIUM_BASE_URL='{cesium_cdn}/';window.__STRATUM_EMBEDDED_SIM__=true;{embedded_engine_js}</script>"
+        f"<script>{sync_bus_js}</script>"
         f'<script src="{cesium_cdn}/Cesium.js"></script>'
         f"{sync_patch}"
         f"<script type=\"module\">{app_src}</script>",
@@ -75,7 +237,17 @@ def _build_stratum_3d_html(embedded_engine_js: str) -> str:
     return html
 
 
+def _build_tab3_html(embedded_engine_js: str, sync_bus_js: str) -> str:
+    index_hud_path = ROOT_DIR / "index.html"
+    if not index_hud_path.exists():
+        return ""
+    src = index_hud_path.read_text(encoding="utf-8")
+    injection = f"<script>{embedded_engine_js}</script>\n<script>{sync_bus_js}</script>"
+    return src.replace("</head>", f"{injection}\n</head>")
+
+
 EMBEDDED_ENGINE_JS = _build_embedded_engine_js()
+SYNC_BUS_JS = _build_sync_bus_js()
 
 st.set_page_config(
     page_title="STRATUM — Autonomous UAV Fleet Command",
@@ -857,6 +1029,11 @@ hud_html = """
         }
 
         async function sendSyncCommand(action, payload = {}) {
+            if (window.AeroSyncBus) {
+                const snap = window.AeroSyncBus.sendCommand(action, payload);
+                if (snap) applyAuthoritativeSnapshot(snap, true);
+                return;
+            }
             if (syncOnline && syncToken) {
                 try {
                     const resp = await fetch(`${SYNC_API_BASE}/api/control`, {
@@ -950,9 +1127,9 @@ hud_html = """
 
         fleet.forEach(drone => {
             tableRowsHtml += `
-                <tr id="row-${drone.id}">
+                <tr id="row-${drone.id}" onclick="window.selectFocusedDrone('${drone.id}')" style="cursor:pointer;">
                     <td>
-                        <button id="btn-${drone.id}" class="row-cmd-btn btn-rtl-recall" onclick="window.toggleIndividualDroneRTL('${drone.id}')">🚨 RECALL</button>
+                        <button id="btn-${drone.id}" class="row-cmd-btn btn-rtl-recall" onclick="event.stopPropagation(); window.toggleIndividualDroneRTL('${drone.id}')">🚨 RECALL</button>
                     </td>
                     <td class="drone-id-tag">${drone.id}</td>
                     <td class="tag-model">${drone.model}</td>
@@ -970,6 +1147,33 @@ hud_html = """
             `;
         });
         tbody.innerHTML = tableRowsHtml;
+
+        window.selectFocusedDrone = function(droneId) {
+            if (window.AeroSyncBus) {
+                window.AeroSyncBus.selectDrone(droneId);
+            }
+            window.focusDroneOnMap(droneId, true);
+        };
+
+        window.focusDroneOnMap = function(droneId, pan = true) {
+            const drone = fleet.find(d => d.id === droneId);
+            if (!drone) return;
+            fleet.forEach(d => {
+                const row = document.getElementById(`row-${d.id}`);
+                if (row) {
+                    if (d.id === droneId) {
+                        row.style.background = 'rgba(240, 118, 50, 0.18)';
+                        row.style.outline = '1px solid rgba(240, 118, 50, 0.5)';
+                    } else {
+                        row.style.background = '';
+                        row.style.outline = '';
+                    }
+                }
+            });
+            if (pan && map) {
+                map.panTo([drone.lat, drone.lon], { animate: true, duration: 0.5 });
+            }
+        };
 
         // Initialize Map Elements & Static Popups (Reference circular badge + dashed range rings)
         fleet.forEach((drone, idx) => {
@@ -1018,6 +1222,10 @@ hud_html = """
                     iconAnchor: [17, 17]
                 })
             }).addTo(map);
+
+            drone.marker.on('click', () => {
+                window.selectFocusedDrone(drone.id);
+            });
 
             drone.marker.bindPopup(`<div id="popup-${drone.id}" style="font-size:12px; min-width:180px;">Loading...</div>`);
         });
@@ -1201,18 +1409,27 @@ hud_html = """
             }
         }
 
-        window.__localRadarSim = typeof window.__createStratumEmbeddedSim === 'function'
-            ? window.__createStratumEmbeddedSim()
-            : null;
-        if (window.__localRadarSim) {
-            applyAuthoritativeSnapshot(window.__localRadarSim.snapshot(), true);
-        }
-        setInterval(() => {
-            if (!syncOnline && window.__localRadarSim) {
-                window.__localRadarSim.tick(0.5);
+        if (window.AeroSyncBus) {
+            window.AeroSyncBus.onSnapshot((snap, selectedId) => {
+                applyAuthoritativeSnapshot(snap, true);
+                if (selectedId && window.focusDroneOnMap) {
+                    window.focusDroneOnMap(selectedId, false);
+                }
+            });
+        } else {
+            window.__localRadarSim = typeof window.__createStratumEmbeddedSim === 'function'
+                ? window.__createStratumEmbeddedSim()
+                : null;
+            if (window.__localRadarSim) {
                 applyAuthoritativeSnapshot(window.__localRadarSim.snapshot(), true);
             }
-        }, 500);
+            setInterval(() => {
+                if (!syncOnline && window.__localRadarSim) {
+                    window.__localRadarSim.tick(0.5);
+                    applyAuthoritativeSnapshot(window.__localRadarSim.snapshot(), true);
+                }
+            }, 500);
+        }
 
         async function connectSyncBus() {
             try {
@@ -1273,7 +1490,7 @@ hud_html = """
 
 hud_html_with_engine = hud_html.replace(
     "<script>\n        function calculateBearing",
-    f"<script>{EMBEDDED_ENGINE_JS}</script>\n    <script>\n        function calculateBearing",
+    f"<script>{EMBEDDED_ENGINE_JS}</script>\n    <script>{SYNC_BUS_JS}</script>\n    <script>\n        function calculateBearing",
 )
 
 tab_radar, tab_3d, tab_hud = st.tabs([
@@ -1286,9 +1503,7 @@ with tab_radar:
     components.html(hud_html_with_engine, height=1250, scrolling=False)
 
 with tab_3d:
-    components.html(_build_stratum_3d_html(EMBEDDED_ENGINE_JS), height=960, scrolling=False)
+    components.html(_build_stratum_3d_html(EMBEDDED_ENGINE_JS, SYNC_BUS_JS), height=960, scrolling=False)
 
 with tab_hud:
-    index_hud_path = ROOT_DIR / "index.html"
-    if index_hud_path.exists():
-        components.html(index_hud_path.read_text(encoding="utf-8"), height=1020, scrolling=True)
+    components.html(_build_tab3_html(EMBEDDED_ENGINE_JS, SYNC_BUS_JS), height=1020, scrolling=True)

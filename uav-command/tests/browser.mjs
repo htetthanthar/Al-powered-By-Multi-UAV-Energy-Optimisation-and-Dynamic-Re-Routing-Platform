@@ -14,20 +14,20 @@ try{
   await page.goto(base,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>document.getElementById('connection').textContent.includes('connected'));
   await page.waitForFunction(()=>Boolean(window.__uavViewer));
-  await page.getByRole('button',{name:'Select UAV-03, Swift'}).click();
-  await page.waitForFunction(()=>document.getElementById('selected-id').textContent==='UAV-03');
+  await page.getByRole('button',{name:'Select UAV-CHARLIE-03, Heavy-Lift Quad'}).click();
+  await page.waitForFunction(()=>document.getElementById('selected-id').textContent==='UAV-CHARLIE-03');
   await page.getByRole('button',{name:'Hold position',exact:true}).click();
-  await page.waitForFunction(()=>document.getElementById('selected-status').textContent==='HOLDING');
+  await page.waitForFunction(()=>document.getElementById('selected-status').textContent.includes('HOLDING'));
   await page.getByRole('button',{name:'Resume flight',exact:true}).click();
-  await page.waitForFunction(()=>document.getElementById('selected-status').textContent==='EN ROUTE');
+  await page.waitForFunction(()=>document.getElementById('selected-status').textContent.includes('EN ROUTE')||document.getElementById('selected-status').textContent.includes('OUTBOUND'));
   await page.getByRole('button',{name:'Return to depot',exact:true}).click();
-  await page.waitForFunction(()=>document.getElementById('selected-status').textContent==='RETURNING');
+  await page.waitForFunction(()=>document.getElementById('selected-status').textContent.includes('RETURNING')||document.getElementById('selected-status').textContent.includes('RTL'));
   await page.locator('#optimize').click();
   await page.waitForFunction(()=>document.getElementById('optimize').getAttribute('aria-pressed')==='false');
   await page.locator('#optimize').click();
   await page.locator('#wind').fill('7');await page.locator('#wind').dispatchEvent('change');
   await page.waitForFunction(()=>document.getElementById('wind-value').textContent==='7.0 m/s');
-  await page.locator('#fleet-search').fill('Kestrel');assert.equal(await page.locator('.aircraft').count(),1);
+  await page.locator('#fleet-search').fill('Titan Cargo');assert.equal(await page.locator('.aircraft').count(),1);
   await page.locator('#fleet-search').fill('');
   await page.locator('#layer-toggle').click();
   await page.waitForFunction(()=>window.__uavViewer.entities.values.length>100);
@@ -39,7 +39,7 @@ try{
   await page.locator('#models-tab').click();assert.equal(await page.locator('#learning-dialog').evaluate(d=>d.open),true);
   await page.screenshot({path:'artifacts/learning-lab.png'});await page.locator('#close-model').click();
   sim.reset();for(let i=0;i<12;i++)sim.tick(1);sim.running=false;
-  await page.getByRole('button',{name:'Select UAV-01, Kestrel'}).click();
+  await page.getByRole('button',{name:'Select UAV-ALPHA-01, Matrice 350 RTK'}).click();
   await page.waitForFunction(()=>document.getElementById('play').textContent.includes('Resume'));
   // Allow the public imagery tiles to arrive; no fixed sleep is needed for test assertions.
   await page.waitForFunction(()=>window.__uavViewer.scene.globe.tilesLoaded,{},{timeout:20000}).catch(()=>{});
@@ -51,5 +51,5 @@ try{
   server.closeAllConnections();
   await page.waitForFunction(()=>document.getElementById('play').disabled,{},{timeout:10000});
   assert.deepEqual(errors,[]);
-  console.log('Browser checks passed: Cesium, six aircraft, selection, hold/resume, return, optimization, wind, search, model dialog, mobile layout, offline controls.');
+  console.log('Browser checks passed: Cesium, sixteen aircraft, selection, hold/resume, return, optimization, wind, search, model dialog, mobile layout, offline controls.');
 }finally{if(browser)await browser.close();server.closeAllConnections();await new Promise(r=>server.close(r));}

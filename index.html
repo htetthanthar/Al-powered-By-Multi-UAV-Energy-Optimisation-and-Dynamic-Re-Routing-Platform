@@ -911,7 +911,9 @@
     <!-- REAL-TIME AVIONICS SIMULATION ENGINE & SENSOR GRAPHICS   -->
     <!-- ======================================================== -->
     <script>
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined' && lucide.createIcons) {
+            lucide.createIcons();
+        }
 
         // Clocks & Timing
         let missionSeconds = 42 * 60 + 25;
@@ -955,21 +957,26 @@
             { id: "UAV-PAPA-16", callsign: "DF-1048", model: "Titan Cargo Heavy", speed: 39.2, status: "On Patrol", alt: 53.0, soc: 92.0, power: 1.420, heading: 130, distanceRp: 11.4, progressPct: 92 }
         ];
 
-        let selectedDroneId = "UAV-ALPHA-01";
+        window.selectedDroneId = "UAV-ALPHA-01";
+        let selectedDroneId = window.selectedDroneId;
         let isRcOverride = false;
         let timelineRange = '24H';
 
         // Render Fleet List
         function renderFleetList() {
             const container = document.getElementById('fleet-list-container');
-            container.innerHTML = '';
-            fleetData.forEach(d => {
+            if (!container) return;
+            const prevScroll = container.scrollTop;
+            container.innerHTML = fleetData.map(d => {
                 const isSelected = d.id === selectedDroneId;
                 let dotColor = 'bg-emerald-400';
-                if (d.status === 'En Route') dotColor = 'bg-orange-400';
-                else if (d.status === 'Monitoring') dotColor = 'bg-cyan-400';
+                if (d.status === 'RTL Recall') dotColor = 'bg-rose-400';
+                else if (d.status === 'Holding') dotColor = 'bg-amber-400';
+                else if (d.status === 'Inbound HQ' || d.status === 'En Route') dotColor = 'bg-orange-400';
+                else if (d.status === 'Avoiding NFZ') dotColor = 'bg-amber-300';
+                else dotColor = 'bg-cyan-400';
 
-                container.innerHTML += `
+                return `
                     <div onclick="selectDrone('${d.id}')" class="p-2 rounded-lg cursor-pointer transition flex items-center justify-between border ${isSelected ? 'bg-slate-900 border-orange-500/60 shadow-md' : 'bg-slate-950/60 border-slate-800/80 hover:bg-slate-900/50'}">
                         <div class="flex items-center space-x-2">
                             <span class="w-2 h-2 rounded-full ${dotColor}"></span>
@@ -984,40 +991,184 @@
                         </div>
                     </div>
                 `;
-            });
+            }).join('');
+            container.scrollTop = prevScroll;
         }
         renderFleetList();
 
-        function selectDrone(id) {
-            selectedDroneId = id;
-            const drone = fleetData.find(d => d.id === id);
+        function updateSelectedDroneUI(id, snap = null) {
+            const drone = fleetData.find(d => d.id === id) || fleetData[0];
             if (!drone) return;
 
-            document.getElementById('hdr-aircraft').innerText = `${drone.id} (${drone.model})`;
-            document.getElementById('pfd-uav-id').innerText = drone.id;
-            document.getElementById('power-val').innerHTML = `${drone.power.toFixed(3)} <span class="text-xs text-slate-400 font-normal">kW</span>`;
-            document.getElementById('fuel-val').innerHTML = `${(drone.power * 0.47).toFixed(3)} <span class="text-xs text-slate-400 font-normal">kW (${drone.soc.toFixed(1)}%)</span>`;
-            document.getElementById('telemetry-ias').innerText = `${(drone.speed * 1.6).toFixed(1)} km/h`;
-            document.getElementById('telemetry-alt').innerText = `${(drone.alt * 8.7).toFixed(0)} m`;
-            document.getElementById('pfd-alt').innerText = drone.alt.toFixed(1);
-            document.getElementById('pfd-heading').innerText = `${drone.heading.toString().padStart(3, '0')}°`;
+            const elHdr = document.getElementById('hdr-aircraft');
+            if (elHdr) elHdr.innerText = `${drone.id} (${drone.model})`;
+
+            const elPfdId = document.getElementById('pfd-uav-id');
+            if (elPfdId) elPfdId.innerText = drone.id;
+
+            const elPower = document.getElementById('power-val');
+            if (elPower) elPower.innerHTML = `${drone.power.toFixed(3)} <span class="text-xs text-slate-400 font-normal">kW</span>`;
+
+            const elFuel = document.getElementById('fuel-val');
+            if (elFuel) elFuel.innerHTML = `${(drone.power * 0.47).toFixed(3)} <span class="text-xs text-slate-400 font-normal">kW (${drone.soc.toFixed(1)}%)</span>`;
+
+            const elCurrent = document.getElementById('current-val');
+            if (elCurrent) elCurrent.innerHTML = `${(drone.power * 1000 / 48).toFixed(1)} <span class="text-xs text-slate-400 font-normal">A</span>`;
+
+            const elPressure = document.getElementById('pressure-val');
+            if (elPressure) elPressure.innerHTML = `${Math.round(drone.soc * 1.5)} <span class="text-xs text-slate-400 font-normal">kPa</span>`;
+
+            const calcRpm = Math.round(5500 + Math.sqrt(drone.power * 1000) * 110);
+            const elRpm = document.getElementById('rpm-val');
+            if (elRpm) elRpm.innerText = calcRpm.toLocaleString();
+
+            const elRpmBar = document.getElementById('rpm-bar');
+            if (elRpmBar) elRpmBar.style.width = `${Math.min(100, Math.round((calcRpm / 12000) * 100))}%`;
+
+            const elIas = document.getElementById('telemetry-ias');
+            if (elIas) elIas.innerText = `${drone.speed.toFixed(1)} km/h`;
+
+            const elPfdIas = document.getElementById('pfd-airspeed');
+            if (elPfdIas) elPfdIas.innerText = (drone.speed / 3.6).toFixed(1);
+
+            const elAlt = document.getElementById('telemetry-alt');
+            if (elAlt) elAlt.innerText = `${drone.alt.toFixed(1)} m`;
+
+            const elPfdAlt = document.getElementById('pfd-alt');
+            if (elPfdAlt) elPfdAlt.innerText = drone.alt.toFixed(1);
+
+            const elTemp = document.getElementById('telemetry-temp');
+            if (elTemp) elTemp.innerText = `${(drone.temp_c || 35.0).toFixed(1)} °C`;
+
+            const elHdg = document.getElementById('pfd-heading');
+            if (elHdg) elHdg.innerText = `${Math.round(drone.heading).toString().padStart(3, '0')}°`;
 
             // Update Mission Status ring & texts
-            document.getElementById('mission-pct-text').innerText = `${drone.progressPct}%`;
+            const elPctText = document.getElementById('mission-pct-text');
+            if (elPctText) elPctText.innerText = `${drone.progressPct}%`;
+
             const circOffset = 251.2 - (251.2 * (drone.progressPct / 100));
-            document.getElementById('mission-progress-circle').style.strokeDashoffset = circOffset;
-            document.getElementById('status-state-text').innerText = drone.status.toUpperCase();
-            document.getElementById('status-dist-text').innerText = `${drone.distanceRp.toFixed(1)} km`;
+            const elCirc = document.getElementById('mission-progress-circle');
+            if (elCirc) elCirc.style.strokeDashoffset = circOffset;
+
+            const elStateText = document.getElementById('status-state-text');
+            if (elStateText) elStateText.innerText = drone.status.toUpperCase();
+
+            const elDistText = document.getElementById('status-dist-text');
+            if (elDistText) elDistText.innerText = `${drone.distanceRp.toFixed(1)} km`;
 
             // Update corridor route bar
-            document.getElementById('corridor-progress-fill').style.width = `${drone.progressPct}%`;
-            document.getElementById('route-stage-text').innerText = `${drone.id} EN ROUTE (${drone.alt.toFixed(1)}m AGL)`;
+            const elCorridor = document.getElementById('corridor-progress-fill');
+            if (elCorridor) elCorridor.style.width = `${drone.progressPct}%`;
+
+            const elRouteStage = document.getElementById('route-stage-text');
+            if (elRouteStage) elRouteStage.innerText = `${drone.id} ${drone.status.toUpperCase()} (${drone.alt.toFixed(1)}m AGL)`;
 
             // Update Compass Needle
-            document.getElementById('compass-needle').setAttribute('transform', `rotate(${drone.heading} 50 50)`);
+            const elNeedle = document.getElementById('compass-needle');
+            if (elNeedle) elNeedle.setAttribute('transform', `rotate(${drone.heading} 50 50)`);
+
+            // Update PFD dynamic pitch
+            pfdPitch = (drone.alt > 15 && drone.status !== 'Holding') ? 2.4 : 0.0;
+            const elPfdPitch = document.getElementById('pfd-pitch');
+            if (elPfdPitch) elPfdPitch.innerText = `${pfdPitch >= 0 ? '+' : ''}${pfdPitch.toFixed(1)}°`;
+
+            // Update Sparklines
+            if (typeof drawSparkline === 'function') {
+                sparkDataIAS.push(drone.speed);
+                if (sparkDataIAS.length > 20) sparkDataIAS.shift();
+                sparkDataAlt.push(drone.alt);
+                if (sparkDataAlt.length > 20) sparkDataAlt.shift();
+                sparkDataTemp.push(drone.temp_c || 35.0);
+                if (sparkDataTemp.length > 20) sparkDataTemp.shift();
+
+                drawSparkline('spark-ias', sparkDataIAS, '#00e5ff', 'rgba(0, 229, 255, 0.15)');
+                drawSparkline('spark-alt', sparkDataAlt, '#10b981', 'rgba(16, 185, 129, 0.15)');
+                drawSparkline('spark-temp', sparkDataTemp, '#f97316', 'rgba(249, 115, 22, 0.15)');
+            }
+        }
+
+        function selectDrone(id) {
+            window.selectedDroneId = selectedDroneId = id;
+            if (window.AeroSyncBus) {
+                window.AeroSyncBus.selectDrone(id);
+            }
+            updateSelectedDroneUI(id);
+            renderFleetList();
+            addSyslog(`Telemetry focus switched to asset: [${id}]`, 'INFO');
+        }
+
+        function applySynchronizedTelemetry(snap, selectedId) {
+            if (!snap || !Array.isArray(snap.drones)) return;
+
+            if (selectedId && selectedId !== selectedDroneId) {
+                window.selectedDroneId = selectedDroneId = selectedId;
+            }
+
+            snap.drones.forEach((srv) => {
+                let drone = fleetData.find(d => d.id === srv.id);
+                if (!drone) {
+                    drone = {
+                        id: srv.id,
+                        callsign: srv.name || srv.id,
+                        model: srv.model || "UAV Asset",
+                        speed: 0,
+                        status: "On Patrol",
+                        alt: 50,
+                        soc: 90,
+                        power: 1.0,
+                        heading: 0,
+                        distanceRp: 15.0,
+                        progressPct: 50,
+                        temp_c: 35.0
+                    };
+                    fleetData.push(drone);
+                }
+
+                drone.alt = Number(srv.alt_m ?? srv.altitude ?? drone.alt);
+                drone.speed = Number(srv.speed_kmh ?? (srv.speed * 3.6) ?? drone.speed);
+                drone.soc = Number(srv.soc_pct ?? srv.battery ?? drone.soc);
+                drone.heading = Number(srv.heading ?? drone.heading);
+                drone.power = Number((srv.power || 0) / 1000);
+                drone.temp_c = Number(srv.temp_c ?? 35.0);
+
+                if (srv.status === 'RETURNING' || srv.tacticalStatus === 'EMERGENCY_RTL' || srv.tacticalStatus === 'INDIVIDUAL_RTL') {
+                    drone.status = "RTL Recall";
+                } else if (srv.status === 'HOLDING' || srv.tacticalStatus === 'HOLDING') {
+                    drone.status = "Holding";
+                } else if (srv.tacticalStatus === 'GEOFENCE_AVOIDING') {
+                    drone.status = "Avoiding NFZ";
+                } else if (srv.tacticalStatus === 'RETURN_TO_HQ') {
+                    drone.status = "Inbound HQ";
+                } else {
+                    drone.status = "On Patrol";
+                }
+
+                const target = srv.destination || { lat: 1.305, lon: 103.835 };
+                const dLat = (srv.position.lat - target.lat) * 110.57;
+                const dLon = (srv.position.lon - target.lon) * 111.32 * Math.cos(srv.position.lat * Math.PI / 180);
+                drone.distanceRp = +(Math.hypot(dLat, dLon)).toFixed(1);
+
+                if (srv.route && Array.isArray(srv.route.legs) && srv.route.legs.length > 0) {
+                    const totalSec = srv.route.legs.reduce((acc, l) => acc + l.seconds, 0);
+                    const doneSec = srv.route.legs.slice(0, srv.leg || 0).reduce((acc, l) => acc + l.seconds, 0) + (srv.progress || 0);
+                    drone.progressPct = totalSec > 0 ? Math.min(100, Math.max(0, Math.round((doneSec / totalSec) * 100))) : 50;
+                } else {
+                    drone.progressPct = Math.round(Math.max(5, Math.min(95, 100 - drone.soc)));
+                }
+            });
+
+            if (snap.wind !== undefined) {
+                const windKt = (snap.wind * 1.94384).toFixed(1);
+                const gustKt = (snap.wind * 1.94384 * 1.35).toFixed(1);
+                const elWind = document.getElementById('lr-wind-speed');
+                if (elWind) elWind.innerHTML = `${windKt} <span class="text-xs text-slate-400">kt</span>`;
+                const elGust = document.getElementById('lr-wind-gust');
+                if (elGust) elGust.innerHTML = `${gustKt} <span class="text-xs text-slate-400">kt</span>`;
+            }
 
             renderFleetList();
-            addSyslog(`Telemetry focus switched to asset: ${drone.callsign} [${drone.id}]`, 'INFO');
+            updateSelectedDroneUI(selectedDroneId, snap);
         }
 
         // Toggle RC Override
@@ -1440,6 +1591,9 @@
 
         function reoptimizeEntireSwarm() {
             addSyslog('[SWARM REPLAN] Running multi-UAV energy minimization pipeline...', 'WARN');
+            if (window.AeroSyncBus) {
+                window.AeroSyncBus.sendCommand('optimize');
+            }
             setTimeout(() => {
                 addSyslog('Shortest conflict-free trajectories generated for all 16 assets (6.2% Wh/km savings).', 'INFO');
             }, 500);
@@ -1447,14 +1601,23 @@
 
         function replayNormalMissions() {
             addSyslog('[REPLAY] Re-initializing all 16 UAV assets to standard patrol corridors.', 'INFO');
+            if (window.AeroSyncBus) {
+                window.AeroSyncBus.sendCommand('reset');
+            }
         }
 
         function triggerGlobalRTL() {
             addSyslog('[SWARM COMMAND] GLOBAL RETURN-TO-LAUNCH INITIATED FOR ALL UNITS.', 'WARN');
+            if (window.AeroSyncBus) {
+                window.AeroSyncBus.sendCommand('return_all');
+            }
         }
 
         function triggerGlobalEStop() {
             addSyslog('[CRITICAL] EMERGENCY ALL-STOP TRIGGERED. BALLISTIC PARACHUTES ARMED.', 'ALERT');
+            if (window.AeroSyncBus) {
+                window.AeroSyncBus.sendCommand('pause');
+            }
         }
 
         // Initialize log messages
@@ -1463,13 +1626,25 @@
         addSyslog('Zenoh C2 DDS telemetry stream synchronized (14.2ms).', 'INFO');
         addSyslog('FLIR IR & VSLAM visual odometry pipeline locked.', 'INFO');
 
-        // Dynamic fluctuations loop
+        // Dynamic fluctuations loop for network latency
         setInterval(() => {
-            const currentRpm = 8500 + Math.floor(Math.random() * 260);
-            document.getElementById('rpm-val').innerText = currentRpm.toLocaleString();
-            document.getElementById('rpm-bar').style.width = `${(currentRpm / 12000) * 100}%`;
-            document.getElementById('c2-rtt').innerText = (13.8 + Math.random() * 1.2).toFixed(1) + ' ms';
+            const elRtt = document.getElementById('c2-rtt');
+            if (elRtt) elRtt.innerText = (13.8 + Math.random() * 1.2).toFixed(1) + ' ms';
         }, 1500);
+
+        // Synchronize with AeroSyncBus (or local embedded fallback)
+        if (window.AeroSyncBus) {
+            window.AeroSyncBus.onSnapshot((snap, selectedId) => {
+                applySynchronizedTelemetry(snap, selectedId);
+            });
+        } else if (typeof window.__createStratumEmbeddedSim === 'function') {
+            const localSim = window.__createStratumEmbeddedSim();
+            applySynchronizedTelemetry(localSim.snapshot(), selectedDroneId);
+            setInterval(() => {
+                localSim.tick(0.4);
+                applySynchronizedTelemetry(localSim.snapshot(), selectedDroneId);
+            }, 400);
+        }
     </script>
 </body>
 </html>
