@@ -22,7 +22,7 @@ async function command(action, extras = {}) {
   } catch (error) { toast(error.message); }
 }
 const point = (p, height = 120) => C.Cartesian3.fromDegrees(p.lon, p.lat, height);
-function cameraHome() { if (viewer) viewer.camera.flyTo({ destination: C.Cartesian3.fromDegrees(103.837, overhead ? 1.345 : 1.115, overhead ? 33000 : 29000), orientation: { heading: 0, pitch: C.Math.toRadians(overhead ? -90 : -51), roll: 0 }, duration: matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.3 }); }
+function cameraHome(duration) { if (viewer) viewer.camera.flyTo({ destination: C.Cartesian3.fromDegrees(103.835, overhead ? 1.352 : 1.135, overhead ? 34000 : 28000), orientation: { heading: 0, pitch: C.Math.toRadians(overhead ? -90 : -52), roll: 0 }, duration: duration !== undefined ? duration : (matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 1.2) }); }
 function syncZones(zones) {
   if (!viewer) return;
   const nextKey = JSON.stringify(zones.map(z => [z.id, z.lat, z.lon, z.radius]));
@@ -43,23 +43,45 @@ function initMap(data) {
   if (!C) { $('map-error').hidden = false; $('map-error').textContent = 'Cesium could not load. Run npm install in uav-command, then refresh. Telemetry remains available.'; return; }
   try {
     C.Ion.defaultAccessToken = '';
-    viewer = new C.Viewer('globe', { baseLayer: false, terrainProvider: new C.EllipsoidTerrainProvider(), animation: false, timeline: false, geocoder: false, homeButton: false, sceneModePicker: false, navigationHelpButton: false, baseLayerPicker: false, fullscreenButton: false, selectionIndicator: false, infoBox: false, shouldAnimate: false });
-    viewer.scene.globe.baseColor = C.Color.fromCssColorString('#111318');
-    viewer.scene.backgroundColor = C.Color.fromCssColorString('#090a0d');
+    if (C.TaskProcessor && String(window.CESIUM_BASE_URL || '').startsWith('http')) {
+      C.TaskProcessor._workerModulePrefix = 'Workers';
+    }
+    viewer = new C.Viewer('globe', { baseLayer: false, terrainProvider: new C.EllipsoidTerrainProvider(), skyBox: false, skyAtmosphere: false, animation: false, timeline: false, geocoder: false, homeButton: false, sceneModePicker: false, navigationHelpButton: false, baseLayerPicker: false, fullscreenButton: false, selectionIndicator: false, infoBox: false, shouldAnimate: false });
+    viewer.scene.globe.baseColor = C.Color.fromCssColorString('#0f2537');
+    viewer.scene.backgroundColor = C.Color.fromCssColorString('#0b1622');
     viewer.scene.globe.enableLighting = false;
+    viewer.scene.globe.showGroundAtmosphere = false;
+    if (viewer.scene.sun) viewer.scene.sun.show = false;
+    if (viewer.scene.moon) viewer.scene.moon.show = false;
     const imagery = new C.UrlTemplateImageryProvider({ url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', credit: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community', maximumLevel: 18 });
-    let failures = 0;
-    imagery.errorEvent.addEventListener(() => { if (++failures > 4) { $('map-error').hidden = false; $('map-error').textContent = 'Satellite imagery is unavailable. UAV coordinates, plans, and graph overlays remain active on the ellipsoid globe.'; } });
-    const layer = viewer.imageryLayers.addImageryProvider(imagery); layer.brightness = .56; layer.saturation = .55; layer.contrast = 1.22;
+    const satLayer = viewer.imageryLayers.addImageryProvider(imagery);
+    satLayer.brightness = 1.05; satLayer.saturation = 1.02; satLayer.contrast = 1.1; satLayer.alpha = 1.0;
+    const roadsOverlay = new C.UrlTemplateImageryProvider({ url: 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Transportation/MapServer/tile/{z}/{y}/{x}', maximumLevel: 18 });
+    const roadsLayer = viewer.imageryLayers.addImageryProvider(roadsOverlay);
+    roadsLayer.alpha = 0.85;
+    const labelsOverlay = new C.UrlTemplateImageryProvider({ url: 'https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', maximumLevel: 18 });
+    const labelsLayer = viewer.imageryLayers.addImageryProvider(labelsOverlay);
+    labelsLayer.alpha = 0.95;
     viewer.scene.screenSpaceCameraController.minimumZoomDistance = 600;
     viewer.scene.screenSpaceCameraController.maximumZoomDistance = 15000000;
     syncZones(data.zones);
     viewer.entities.add({ position: point(data.home, 35), point: { pixelSize: 13, color: C.Color.fromCssColorString('#4ade80'), outlineColor: C.Color.fromCssColorString('#14171c'), outlineWidth: 3, disableDepthTestDistance: Infinity }, label: { text: 'HEADQUARTERS · QUEENSTOWN DEPOT', font: '600 10px monospace', pixelOffset: new C.Cartesian2(0, 24), fillColor: C.Color.fromCssColorString('#4ade80'), showBackground: true, backgroundColor: C.Color.fromCssColorString('#13161ce6'), backgroundPadding: new C.Cartesian2(8, 5), disableDepthTestDistance: Infinity } });
-    const locations = [['MARINA BAY',103.86,1.282],['JURONG EAST',103.742,1.335],['BISHAN',103.849,1.35],['TAMPINES',103.945,1.354],['WOODLANDS',103.785,1.435]];
-    for (const [name,lon,lat] of locations) viewer.entities.add({position:point({lon,lat},40),label:{text:name,font:'10px monospace',fillColor:C.Color.fromCssColorString('#9ca3af'),pixelOffset:new C.Cartesian2(0,10),disableDepthTestDistance:Infinity}});
+    const locations = [['MARINA BAY',103.86,1.282],['JURONG EAST',103.742,1.335],['BISHAN',103.849,1.35],['TAMPINES',103.945,1.354],['WOODLANDS',103.785,1.435],['CHANGI',103.987,1.355],['SENTOSA',103.827,1.249]];
+    for (const [name,lon,lat] of locations) viewer.entities.add({position:point({lon,lat},40),label:{text:name,font:'600 10px monospace',fillColor:C.Color.fromCssColorString('#f8fafc'),showBackground:true,backgroundColor:C.Color.fromCssColorString('#0f172acc'),backgroundPadding:new C.Cartesian2(5,3),pixelOffset:new C.Cartesian2(0,10),disableDepthTestDistance:Infinity}});
     const handler = new C.ScreenSpaceEventHandler(viewer.scene.canvas);
     handler.setInputAction(movement => { const picked = viewer.scene.pick(movement.position); const id = picked?.id?.id; if (typeof id === 'string' && id.startsWith('UAV-')) selectAircraft(id); }, C.ScreenSpaceEventType.LEFT_CLICK);
-    cameraHome();
+    cameraHome(0);
+    let hadSize = $('globe').clientWidth > 0 && $('globe').clientHeight > 0;
+    if (typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(entries => {
+        for (const entry of entries) {
+          if (entry.contentRect.width > 0 && entry.contentRect.height > 0 && viewer) {
+            viewer.resize();
+            if (!hadSize) { hadSize = true; cameraHome(0); }
+          }
+        }
+      }).observe($('globe'));
+    }
     window.__uavViewer = viewer;
   } catch (error) { $('map-error').hidden = false; $('map-error').textContent = '3D rendering is unavailable in this browser. Try a WebGL-enabled browser. Telemetry and simulation controls remain usable.'; console.error(error); }
 }

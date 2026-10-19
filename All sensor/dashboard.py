@@ -30,15 +30,46 @@ def _build_stratum_3d_html(embedded_engine_js: str) -> str:
     index_src = (UAV_CMD_DIR / "public" / "index.html").read_text(encoding="utf-8")
     style_src = (UAV_CMD_DIR / "public" / "style.css").read_text(encoding="utf-8")
     app_src = (UAV_CMD_DIR / "public" / "app.js").read_text(encoding="utf-8")
-    cesium_cdn = "https://unpkg.com/cesium@1.114.0/Build/Cesium"
+    cesium_cdn = "https://cdn.jsdelivr.net/npm/cesium@1.124.0/Build/Cesium"
+
+    worker_shim = """
+    const _OrigBlob = window.Blob;
+    window.Blob = function(parts, opts) {
+      if (Array.isArray(parts) && typeof parts[0] === 'string') {
+        parts = parts.map(p => typeof p === 'string'
+          ? p.replace(/^\\s*import\\s+"([^"]+)";\\s*$/, (_, spec) => {
+              const base = String(window.CESIUM_BASE_URL || '').replace(/\\/+$/, '');
+              const url = spec.startsWith('http')
+                ? spec.replace('/Workers//', '/Workers/')
+                : base + '/Workers/' + spec.replace(/^Workers\\/+/, '').replace(/\\.js$/, '') + '.js';
+              return 'const __q=[];const __h=e=>__q.push(e);self.onmessage=__h;import("' + url + '").then(()=>{if(self.onmessage!==__h){for(const e of __q)self.onmessage(e);}__q.length=0;});';
+            })
+          : p
+        );
+      }
+      return new _OrigBlob(parts, opts);
+    };
+    """
+
+    sync_patch = """
+    <script>
+    if (window.Cesium && window.Cesium.HeightmapTerrainData) {
+      window.Cesium.HeightmapTerrainData.prototype.createMesh = function(options) {
+        return Promise.resolve(this._createMeshSync(options));
+      };
+    }
+    </script>
+    """
+
     html = index_src.replace(
         '<link rel="stylesheet" href="/cesium/Widgets/widgets.css"><link rel="stylesheet" href="/style.css">',
         f'<link rel="stylesheet" href="{cesium_cdn}/Widgets/widgets.css"><style>{style_src}</style>',
     )
     html = html.replace(
         "<script>window.CESIUM_BASE_URL='/cesium/';</script><script src=\"/cesium/Cesium.js\"></script><script type=\"module\" src=\"/app.js\"></script>",
-        f"<script>window.CESIUM_BASE_URL='{cesium_cdn}/';window.__STRATUM_EMBEDDED_SIM__=true;{embedded_engine_js}</script>"
+        f"<script>{worker_shim}window.CESIUM_BASE_URL='{cesium_cdn}/';window.__STRATUM_EMBEDDED_SIM__=true;{embedded_engine_js}</script>"
         f'<script src="{cesium_cdn}/Cesium.js"></script>'
+        f"{sync_patch}"
         f"<script type=\"module\">{app_src}</script>",
     )
     return html
