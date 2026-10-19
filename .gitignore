@@ -13,3 +13,9 @@ uav-command/node_modules/
 *.zip
 .DS_Store
 Thumbs.db
+
+# Generated CI & Runtime Artifacts
+data/
+checkpoints/
+test-results.xml
+.coverage

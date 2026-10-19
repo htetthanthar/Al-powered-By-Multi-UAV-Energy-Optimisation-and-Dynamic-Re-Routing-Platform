@@ -31,27 +31,31 @@ jobs:
       - name: Install Python Requirements
         run: |
           python -m pip install --upgrade pip
-          pip install flake8 pytest
+          pip install flake8 pytest scipy shapely requests
           pip install -r requirements.txt
 
       - name: Lint Code with Flake8
         run: |
           # Stop build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --exclude=.venv,venv,node_modules --count --select=E9,F63,F7,F82 --show-source --statistics
           # Warning check for complexity
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+          flake8 . --exclude=.venv,venv,node_modules --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
       - name: Generate Synthetic Verification Data
         run: |
-          python generate_datasets.py
+          python "All sensor/generate_datasets.py"
 
       - name: Run Operational Constraint Unit Tests
+        env:
+          PYTHONPATH: "All sensor"
         run: |
-          pytest test_pipeline.py -v --junitxml=test-results.xml
+          pytest "All sensor/test_pipeline.py" -v --junitxml=test-results.xml
 
       - name: Verify MLOps Drift Detection Suite
+        env:
+          PYTHONPATH: "All sensor"
         run: |
-          python retrain_pipeline.py
+          python "All sensor/retrain_pipeline.py"
 
   build-docker:
     needs: test-and-validate
@@ -67,5 +71,6 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Config/Dockerfile
           push: false
           tags: uav-route-optimization:latest

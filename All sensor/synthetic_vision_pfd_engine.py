@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 class SyntheticVisionPFDEngine:
     def __init__(

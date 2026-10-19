@@ -54,7 +54,7 @@ class DroneCANBatteryMonitor:
         v_f16 = float_to_f16(voltage)
         i_f16 = float_to_f16(current)
         t_f16 = float_to_f16(temperature_k)
-        soc_u8 = int(np.clip(soc_pct, 0.0, 100.0)) if 'np' in globals() else int(min(100, max(0, soc_pct)))
+        soc_u8 = int(min(100, max(0, soc_pct)))
         soh_u8 = int(min(100, max(0, soh_pct)))
 
         return struct.pack("<BHHHBB", battery_id, v_f16, i_f16, t_f16, soc_u8, soh_u8)

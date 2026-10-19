@@ -24,7 +24,7 @@ class AirspaceGeometryResolver:
         except FileNotFoundError:
             # Fallback polygon
             p = Polygon([[103.88, 1.34], [103.93, 1.34], [103.93, 1.39], [103.88, 1.39]])
-            self.restricted_polygons.append({"name": "Fallback NFZ", "polygon": p, "buffered_safety": p.buffer(0.005)})
+            self.restricted_polygons.append({"name": "Restricted Fallback NFZ", "polygon": p, "buffered_safety": p.buffer(0.005)})
 
     def check_trajectory_conflict(self, p1_lonlat, p2_lonlat):
         """
